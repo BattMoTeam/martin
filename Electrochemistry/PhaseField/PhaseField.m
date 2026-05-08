@@ -189,6 +189,12 @@ classdef PhaseField < BaseModel
 
         end
         
+        function forces = getValidDrivingForces(model)
+        % needed by MRST
+            forces = getValidDrivingForces@PhysicalModel(model);
+            forces.src = [];
+
+        end
 
         function state = updateC(model, state)
 
