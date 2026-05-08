@@ -251,9 +251,17 @@ classdef PhaseField < BaseModel
             mobility  = model.mobilityFunc(c);
             dMobility = model.dMobilityFunc(c);
 
+            eqC = massAccumC - dMobility .* dC .* dW - mobility .* ddW;
+
+            % conditons limites : flux nul aux extrémites du segment (en 1D)
+            % dc/dn = 0
+            % dw/dn = 0
+            
+            eqC(1)   = dC(1);
+            eqC(end) = dC(end);
 
 
-            state.eqC = massAccumC - dMobility .* dC .* dW - mobility .* ddW;
+            state.eqC = eqC;
 
         end
         
