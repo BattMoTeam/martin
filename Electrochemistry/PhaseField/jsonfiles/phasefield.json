@@ -1,0 +1,6 @@
+{"N" : 1,
+ "epsilon" : 1,
+ "mobility" : {
+   "functionFormat" : "named function",
+   "argumentList": ["c"],
+   "functionName": "computePhaseFieldMobility"}}

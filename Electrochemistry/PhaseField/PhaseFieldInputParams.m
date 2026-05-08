@@ -12,12 +12,11 @@ classdef PhaseFieldInputParams < InputParams
         %% Physical functions 
 
         % Mobility function M(c)
-        mobilityFunc
+        mobility
         % Derivative of mobility function M'(c)
-        dMobilityFunc
+        dMobility
         % Free energy F(c) 
-        energyFunc
-
+        energy
 
         % Interface width parameter
         epsilon

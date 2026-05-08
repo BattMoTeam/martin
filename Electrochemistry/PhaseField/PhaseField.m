@@ -6,12 +6,12 @@ classdef PhaseField < BaseModel
 
         % Standard parameters
 
-        N             % discretization parameter
-        mobilityFunc  % mobility function
-        dMobilityFunc % derivative of mobility function
-        energyFunc    % Free energy function
+        N         % discretization parameter
+        mobility  % mobility function
+        dMobility % derivative of mobility function
+        energy    % Free energy function
 
-        epsilon               % interface width parameter
+        epsilon % interface width parameter
         
         % boundaryConditionType % 'neumann' or 'dirichlet'
         % boundaryValue         % boundary values [left, right]
@@ -23,6 +23,10 @@ classdef PhaseField < BaseModel
         dA  % Collocation mapping matrices, first derivative
         ddA % Collocation mapping matrices, second derivative
         
+        mobilityFunc  % mobility function
+        dMobilityFunc % derivative of mobility function
+        energyFunc    % Free energy function
+
     end
     
     methods
@@ -33,12 +37,10 @@ classdef PhaseField < BaseModel
         %
             model = model@BaseModel();
 
-            fdnames = {'N'                    , ...
-                       'epsilon'              , ...
-                       'mobilityFunc'         , ...
-                       'dMobilityFunc'        , ...
-                       'energyFunc'};
-
+            fdnames = {'N'      , ...
+                       'epsilon', ...
+                       'mobility'};
+            
             % fdnames = {'N'                    , ...
             %            'epsilon'              , ...
             %            'mobilityFunc'         , ...
@@ -47,8 +49,14 @@ classdef PhaseField < BaseModel
             %            'boundaryConditionType', ...
             %            'boundaryValue'};
 
-            % model = dispatchParams(model, inputparams, fdnames);
+            model = dispatchParams(model, inputparams, fdnames);
 
+
+            % func  = setupFunction(model.mobility)
+            % model.mobilityFunc = @(c) func(c, model.p1, model.p2);
+
+            model.mobilityFunc = setupFunction(model.mobility);
+            
             % model = model.setupSpectralModel();
 
         end
