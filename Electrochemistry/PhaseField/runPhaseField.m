@@ -4,6 +4,10 @@
 filename = fullfile(battmoDir(), 'Electrochemistry', 'PhaseField', 'jsonfiles', 'phasefield.json');
 jsonstruct = parseBattmoJson(filename);
 
+% instantiate model (done also by setupPhaseFieldSimulation)
+% inputparams = PhaseFieldInputParams(jsonstruct);
+% model = PhaseField(inputparams);
+
 %% Setup model, initial state
 %
 
