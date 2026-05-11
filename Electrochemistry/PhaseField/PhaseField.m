@@ -12,6 +12,11 @@ classdef PhaseField < BaseModel
         energy    % Free energy function
 
         epsilon % interface width parameter
+
+        omega % constant in the expression of the energy
+              % is related to the nearest-neighbor interaction strength between lithium ions within the host
+        kT    % appears in the expression of the energy
+              % value normalised for now
         
         % boundaryConditionType % 'neumann' or 'dirichlet'
         % boundaryValue         % boundary values [left, right]
@@ -37,9 +42,13 @@ classdef PhaseField < BaseModel
         %
             model = model@BaseModel();
 
-            fdnames = {'N'      , ...
-                       'epsilon', ...
-                       'mobility'};
+            fdnames = {'N'        , ...
+                       'epsilon'  , ...
+                       'mobility' , ...
+                       'dMobility', ...
+                       'energy'   , ...
+                       'omega'    , ...
+                       'kT'};
             
             % fdnames = {'N'                    , ...
             %            'epsilon'              , ...
@@ -51,13 +60,19 @@ classdef PhaseField < BaseModel
 
             model = dispatchParams(model, inputparams, fdnames);
 
-
+            
+            % when more parameters are used 
+            % 
             % func  = setupFunction(model.mobility)
             % model.mobilityFunc = @(c) func(c, model.p1, model.p2);
 
-            model.mobilityFunc = setupFunction(model.mobility);
+            model.mobilityFunc  = setupFunction(model.mobility);
+            model.dMobilityFunc = setupFunction(model.dMobility);
+            func                = setupFunction(model.energy);
+            model.energyFunc    = @(c) func(c, model.omega, model.kT);
             
-            % model = model.setupSpectralModel();
+            
+            model = model.setupSpectralModel();
 
         end
 
@@ -122,7 +137,7 @@ classdef PhaseField < BaseModel
 
             fn = @PhaseField.updateMassAccumC;
             fn = {fn, @(propfunction) PropFunction.accumFuncCallSetupFn(propfunction)};
-            model = model.registerPropFunction({'massAccumC', fn, {'c'}});
+            model = model.registerPropFunction({'massAccumC', fn, {'coefC'}});
             
         end
 
@@ -131,6 +146,13 @@ classdef PhaseField < BaseModel
             model = model.equipModelForComputation();
             % model = model.setupScalings([]);
             % 
+        end
+
+        function forces = getValidDrivingForces(model)
+        % needed by MRST
+            forces = getValidDrivingForces@PhysicalModel(model);
+            forces.src = [];
+
         end
 
 
@@ -188,14 +210,38 @@ classdef PhaseField < BaseModel
             model.ddA = chebDDA;
 
         end
-        
-        function forces = getValidDrivingForces(model)
-        % needed by MRST
-            forces = getValidDrivingForces@PhysicalModel(model);
-            forces.src = [];
+
+        function initstate = setupInitialState(model)
+            % initialize with a random perturbation aroud the mean value 0.5
+            
+            numPoints = model.N + 1;
+
+            % compute initial coefficients of c by inverting matrix A
+            cInit = 0.5 + 0.01 * randn(numPoints, 1);
+            coefCInit = model.A \ cInit;
+
+            % compute ddC to compute w0
+            ddCInit = model.ddA * coefCInit;
+            wInit = model.energyFunc(cInit) - model.epsilon^2 .* ddCInit;
+            
+            % compute initial coefficients of w 
+            coefWInit = model.A \ wInit;
+            
+
+            initstate.coefC = coefCInit;
+            initstate.coefW = coefWInit;
+
+            % initialize the other variables
+            initstate.c   = cInit;
+            initstate.w   = wInit;
+            initstate.dC  = model.dA  * coefCInit;
+            initstate.dW  = model.dA  * coefWInit;
+            initstate.ddC = ddCInit;
+            initstate.ddW = model.ddA * coefWInit;
 
         end
-
+        
+        
         function state = updateC(model, state)
 
             state.c = model.A * state.coefC;
@@ -234,7 +280,10 @@ classdef PhaseField < BaseModel
 
         function state = updateMassAccumC(model, state, state0, dt)
 
-            state.massAccumC = (1/dt) .* (state.c - state0.c);
+            c  = model.A * state.coefC;
+            c0 = model.A * state0.coefC;
+
+            state.massAccumC = (1/dt) .* (c - c0);
 
         end
         
@@ -253,14 +302,13 @@ classdef PhaseField < BaseModel
 
             eqC = massAccumC - dMobility .* dC .* dW - mobility .* ddW;
 
-            % conditons limites : flux nul aux extrémites du segment (en 1D)
-            % dc/dn = 0
-            % dw/dn = 0
+            % Neumman boundary condition : dc/dn = 0
+            % -> flat concentration profile at the boundary
+            % 1D case : dc/dx = 0
             
             eqC(1)   = dC(1);
             eqC(end) = dC(end);
-
-
+            
             state.eqC = eqC;
 
         end
@@ -271,11 +319,21 @@ classdef PhaseField < BaseModel
             c    = state.c;
             ddC  = state.ddC;
             w    = state.w;
+            dW   = state.dW;
             
             F   = model.energyFunc(c);
             epsi = model.epsilon;
 
-            state.eqW = w + epsi^2 .* ddC - F;
+            eqW = w + epsi^2 .* ddC - F;
+
+            % Neumann boundary condition : dw/dn = 0
+            % -> zero flux at the boundary
+            % 1D case : dw/dx = 0
+
+            eqW(1)   = dW(1);
+            eqW(end) = dW(end);
+
+            state.eqW = eqW;
             
         end
         

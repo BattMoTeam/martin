@@ -21,11 +21,18 @@ classdef PhaseFieldInputParams < InputParams
         % Interface width parameter
         epsilon
 
-        % Boundary condition type : 'neumann' or 'dirichlet'
-        boundaryConditionType
-        % Boundary values [left, right] (used for Dirichlet conditions)
-        boundaryValue
-        
+        % % Boundary condition type : 'neumann' or 'dirichlet'
+        % boundaryConditionType
+        % % Boundary values [left, right] (used for Dirichlet conditions)
+        % boundaryValue
+        % 
+
+
+        omega % constant in the expression of the energy
+              % is related to the nearest-neighbor interaction strength between lithium ions within the host
+        kT    % appears in the expression of the energy
+              % value normalised for now
+              
     end
     
     methods

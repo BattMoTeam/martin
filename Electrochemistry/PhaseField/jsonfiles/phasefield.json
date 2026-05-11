@@ -1,6 +1,21 @@
-{"N" : 1,
- "epsilon" : 1,
- "mobility" : {
-   "functionFormat" : "named function",
-   "argumentList": ["c"],
-   "functionName": "computePhaseFieldMobility"}}
+{
+  "N"       : 20,
+  "epsilon" : 1,
+  "mobility" : {
+    "functionFormat" : "named function",
+    "argumentList"   : ["c"],
+    "functionName"   : "computePhaseFieldMobility"
+  },
+  "dMobility" : {
+    "functionFormat" : "named function",
+    "argumentList"   : ["c"],
+    "functionName"   : "computePhaseFieldDMobility"
+  },
+  "energy" : {
+    "functionFormat" : "named function",
+    "argumentList"   : ["c", "omega", "kT"],
+    "functionName"   : "computePhaseFieldEnergy"
+  },
+  "omega"   : 2.5,
+  "kT"      : 1
+}
