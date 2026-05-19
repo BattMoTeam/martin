@@ -21,7 +21,6 @@ classdef PhaseField < BaseModel
         % boundaryConditionType % 'neumann' or 'dirichlet'
         % boundaryValue         % boundary values [left, right]
         
-        
         %% Helper structures
         
         A   % Collocation mapping matrices
@@ -158,6 +157,16 @@ classdef PhaseField < BaseModel
         function newstate = addVariablesAfterConvergence(model, newstate, state)
 
             newstate.c = state.c;
+            
+        end
+
+        function [c1, c2] = getEquilibriumValues(model)
+
+            c0 = 0.1;
+            c1 = fzero(model.energyFunc, c0);
+            
+            c0 = 0.9;
+            c2 = fzero(model.energyFunc, c0);
             
         end
 
