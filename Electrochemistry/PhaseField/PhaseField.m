@@ -103,13 +103,22 @@ classdef PhaseField < BaseModel
             varnames{end + 1} = 'eqC';
             % equation for w
             varnames{end + 1} = 'eqW';
-            
             % accumulation term for c
             varnames{end + 1} = 'massAccumC';
-            
+            % boundary flux at the right boundary
+            varnames{end + 1} = 'time';
+            % boundary flux at the right boundary
+            varnames{end + 1} = 'bdFlux';            
 
             model = model.registerVarNames(varnames);
 
+            model = model.setAsStaticVarName('time');
+            
+            inputnames = {'time'};
+            fn = @ProtonicMembrane.updateBdFlux;
+            fn = {fn, @(propfunction) PropFunction.drivingForceFuncCallSetupFn(propfunction)};
+            model = model.registerPropFunction({'bdFlux', fn, inputnames});
+            
             fn = @PhaseField.updateC;
             model = model.registerPropFunction({'c', fn, {'coefC'}});
             
@@ -132,7 +141,7 @@ classdef PhaseField < BaseModel
             model = model.registerPropFunction({'eqC', fn, {'massAccumC', 'c', 'dC', 'dW', 'ddW'}});
 
             fn = @PhaseField.updateEqW;
-            model = model.registerPropFunction({'eqW', fn, {'w', 'ddC', 'c'}});
+            model = model.registerPropFunction({'eqW', fn, {'w', 'ddC', 'c', 'bdFlux'}});
 
             fn = @PhaseField.updateMassAccumC;
             fn = {fn, @(propfunction) PropFunction.accumFuncCallSetupFn(propfunction)};
@@ -148,7 +157,8 @@ classdef PhaseField < BaseModel
         end
 
         function forces = getValidDrivingForces(model)
-        % needed by MRST
+            % needed by MRST
+            
             forces = getValidDrivingForces@PhysicalModel(model);
             forces.src = [];
 
@@ -180,6 +190,13 @@ classdef PhaseField < BaseModel
             % size(N)
 
             x = flipud(cos(pi * jIdx / N));
+
+        end
+
+        function state = updateBdFlux(model, state, drivingForces)
+
+            time = state.time;
+            state.bdFlux = drivingForces.src(time);
 
         end
 

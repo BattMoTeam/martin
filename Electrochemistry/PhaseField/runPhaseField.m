@@ -29,9 +29,7 @@ dt    = total / n;
 dts   = rampupTimesteps(total, dt, 5);
 
 
-
-
-control  = struct('src', []);
+control  = struct('src', @(time) 0.01);
 
 step = struct('val', dts, 'control', ones(numel(dts), 1));
 schedule = struct('control', control, 'step', step);
