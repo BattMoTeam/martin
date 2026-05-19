@@ -137,7 +137,7 @@ classdef PhaseField < BaseModel
 
             fn = @PhaseField.updateMassAccumC;
             fn = {fn, @(propfunction) PropFunction.accumFuncCallSetupFn(propfunction)};
-            model = model.registerPropFunction({'massAccumC', fn, {'coefC'}});
+            model = model.registerPropFunction({'massAccumC', fn, {'c'}});
             
         end
 
@@ -155,6 +155,11 @@ classdef PhaseField < BaseModel
 
         end
 
+        function newstate = addVariablesAfterConvergence(model, newstate, state)
+
+            newstate.c = state.c;
+            
+        end
 
         function x = chebyshevNodes(model, N)
             % returns the N+1 Chebyshev-Lobatto nodes on [-1, 1] : x_j = cos(pi*j/N), j=0..N
@@ -291,10 +296,7 @@ classdef PhaseField < BaseModel
 
         function state = updateMassAccumC(model, state, state0, dt)
 
-            c  = model.A * state.coefC;
-            c0 = model.A * state0.coefC;
-
-            state.massAccumC = (1/dt) .* (c - c0);
+            state.massAccumC = (1/dt) .* (state.c - state0.c);
 
         end
         
