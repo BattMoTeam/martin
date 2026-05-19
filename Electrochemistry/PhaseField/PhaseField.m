@@ -357,14 +357,17 @@ classdef PhaseField < BaseModel
         function state = updateEqW(model, state)
             % Residual form of : w + d2c/dx2 - F(c) = 0
 
-            c    = state.c;
-            ddC  = state.ddC;
-            w    = state.w;
-            dW   = state.dW;
+            c      = state.c;
+            ddC    = state.ddC;
+            w      = state.w;
+            dW     = state.dW;
+            bdFlux = state.bdFlux;
             
-            F    = model.energyFunc(c);
-            epsi = model.epsilon;
+            F        = model.energyFunc(c);
+            mobility = model.mobilityFunc(c);
 
+            epsi     = model.epsilon;
+            
             eqW = w + epsi^2 .* ddC - F;
 
             % Neumann boundary condition : dw/dn = 0
@@ -372,7 +375,7 @@ classdef PhaseField < BaseModel
             % 1D case : dw/dx = 0
 
             eqW(1)   = dW(1);
-            eqW(end) = dW(end);
+            eqW(end) = mobility(end).*dW(end) - bdFlux;
 
             state.eqW = eqW;
             
