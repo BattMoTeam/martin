@@ -45,7 +45,8 @@ simsetup.model.verbose = true;
 
 
 %% Visualization
-[simResults, globvars, reports] = simsetup.run();
+[states, globvars, reports] = simsetup.run();
+
 model = simsetup.model;
 x     = model.chebyshevNodes(model.N);  
 % Figure 1 : energy functions
@@ -78,20 +79,19 @@ grid on;
 % Figure 2 : concentration profiles
 nPlots = numel(dts);
 % nPlots = 100;
-nPlots = min(nPlots, numel(simResults));  % in case fewer states are saved
+nPlots = min(nPlots, numel(states));  % in case fewer states are saved
 
 figure;
 hold on;
 
 % initial state with black line
-cInit = model.A * simsetup.initstate.coefC;
+cInit = simsetup.initstate.c;
 plot(x, cInit, 'k-', 'LineWidth', 2, 'DisplayName', 'initial');
 
 % states 1 to nPlots with color gradient (blue = init, yellow = last)
 cmap = parula(nPlots);
 for iState = 1 : nPlots
-    coefC = simResults{iState}.coefC;
-    c     = model.A * coefC;
+    c = states{iState}.c;
     plot(x, c, 'Color', cmap(iState, :), 'DisplayName', sprintf('state %d', iState));
 end
 
