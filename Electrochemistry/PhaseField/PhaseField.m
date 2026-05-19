@@ -248,18 +248,20 @@ classdef PhaseField < BaseModel
 
             % 1. ------------------------------------------------
             % with a random perturbation aroud the mean value 0.5
-            cInit = 0.5 + 0.01 * randn(numPoints, 1);
-            % compute initial coefficients of c by inverting matrix A
-            coefCInit = model.A \ cInit;
+            % mean = 0.4;
+            % cInit = mean + 0.01 * randn(numPoints, 1);
+            % % compute initial coefficients of c by inverting matrix A
+            % coefCInit = model.A \ cInit;
 
             % % 2. ---------------------------------------------------
-            % % smooth perturbation : we define the coefficients first
-            % coefCInit         = zeros(numPoints, 1);
-            % coefCInit(1)      = 0.5;                              % T_0 : mean concentration
-            % nModes         = 10;                                  % only first modes
-            % coefCInit(2 : nModes + 1) = 0.01 * randn(nModes, 1);
-            % % recompute cInit from the spectral coefficients
-            % cInit = model.A * coefCInit;
+            % smooth perturbation : we define the coefficients first
+            rng(10);
+            coefCInit    = zeros(numPoints, 1);
+            coefCInit(1) = 0.3;                              % T_0 : mean concentration
+            nModes       = 10;                                  % only first modes
+            coefCInit(2 : nModes + 1) = 0.01 * randn(nModes, 1);
+            % recompute cInit from the spectral coefficients
+            cInit = model.A * coefCInit;
 
 
             % compute ddC to compute w0
