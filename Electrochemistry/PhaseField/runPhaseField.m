@@ -17,19 +17,20 @@ simsetup = setupPhaseFieldSimulation(jsonstruct);
 % in this case only the time steps are given, no source term
 %
 
-% total = 1*hour;
-% 
-% n   = 100;
-% dt  = total/n;
-% dts = rampupTimesteps(total, dt, 5);
-
-total = 2;                       
-n     = 200;                       
+total = 100;
+n     = 1000;                       
 dt    = total / n;                  
 dts   = rampupTimesteps(total, dt, 5);
 
+clear flux
+flux.functionFormat = 'tabulated';
+flux.argumentList   = {'time'};
+flux.dataX          = [0, 20, 21, 100];
+flux.dataY          = [0.01, 0.01, -0.01, -0.01];
 
-control  = struct('src', @(time) 0.01);
+fluxfunc = setupFunction(flux);
+
+control  = struct('src', @(t) fluxfunc(t));
 
 step = struct('val', dts, 'control', ones(numel(dts), 1));
 schedule = struct('control', control, 'step', step);
