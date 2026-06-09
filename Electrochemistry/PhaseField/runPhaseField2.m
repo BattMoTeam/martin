@@ -3,7 +3,7 @@
 
 filename = fullfile(battmoDir(), 'Electrochemistry', 'PhaseField', 'jsonfiles', 'phasefield.json');
 jsonstruct = parseBattmoJson(filename);
-jsonstruct.np = 2;
+jsonstruct.np = 3;
     
 % instantiate model (done also by setupPhaseFieldSimulation)
 inputparams = PhaseFieldInputParams(jsonstruct);
@@ -238,7 +238,15 @@ yline(0, 'k--', 'LineWidth', 0.5);
 % end
 
 
-%% Interactive visualization with slider
+
+%% Interactive visualization with slider for multiples particles
+
+op = model.operators;
+indInnerBc = op.indInnerBc;
+nPt = model.N + 1;
+np = model.np;
+   
+
 times   = cellfun(@(s) s.time, states);
 nStates = numel(states);
 nTrail  = 10; % number of trailing curves
@@ -269,14 +277,14 @@ lbl = uicontrol(fig, 'Style', 'text', ...
 
 % slider handler : using continuous value change to check and plot on
 % release & while sliding the cursor (might have to change if too slow)
-addlistener(sld, 'ContinuousValueChange', @(src, ~) updatePlot(src, ax, states, times, x, nTrail, cmap, lbl, c0));
+addlistener(sld, 'ContinuousValueChange', @(src, ~) updatePlot(src, ax, states, times, x, nTrail, cmap, lbl, c0, indInnerBc, nPt, np));
 % addlistener(sld, '', @(src, ~) updatePlot(src, ax, states, times, x, nTrail, cmap, lbl, c0));
 
 
 % draw first step
-updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0);
+updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0, indInnerBc, nPt, np);
 
-function updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0)
+function updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0, indInnerBc, nPt, np)
 
     % check that all graphics objects are still valid
     if ~isvalid(sld) || ~isvalid(ax) || ~isvalid(lbl)
@@ -288,7 +296,10 @@ function updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0)
     hold(ax, 'on');
 
     % keep initial state displayed
-    plot(ax, x, c0, 'k-', 'LineWidth', 2, 'DisplayName', 'initial');
+    for ip = 1 : np
+        idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+        plot(ax, x, c0(idx), 'k--', 'LineWidth', 1, 'DisplayName','initial');
+    end
 
     iStart = max(1, iState - nTrail + 1);
     nDrawn = iState - iStart + 1;
@@ -296,7 +307,12 @@ function updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0)
         alpha    = (iTrail - iStart + 1) / nDrawn; % 0 = oldest, 1 = newest
         trailIdx = round(alpha * (nTrail - 1)) + 1;
         c        = states{iTrail}.c;
-        plot(ax, x, c, 'Color', [cmap(trailIdx, :), alpha], 'LineWidth', 0.5 + 1.5 * alpha); % thicker for more recent
+        for ip = 1 : np
+            idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+            plot(ax, x, c(idx), ...
+                 'Color',     [cmap(trailIdx, :), alpha], ...
+                 'LineWidth', 0.5 + 1.5 * alpha);
+        end
     end
 
     title(ax, sprintf('c(x,t)  @  t = %.2f  (state %d / %d)', times(iState), iState, numel(states)));
@@ -305,4 +321,3 @@ function updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0)
     grid(ax, 'on');
 
 end
-
