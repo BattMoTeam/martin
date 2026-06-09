@@ -6,7 +6,7 @@ classdef PhaseField < BaseModel
 
         % Standard parameters
 
-        N         % discretization parameter
+        N         % discretization parameter (size of coefC and coefW is N + 1)
         mobility  % mobility function
         dMobility % derivative of mobility function
         energy    % Free energy function
@@ -42,6 +42,7 @@ classdef PhaseField < BaseModel
             model = model@BaseModel();
 
             fdnames = {'N'        , ...
+                       'np'       , ...
                        'epsilon'  , ...
                        'mobility' , ...
                        'dMobility', ...
@@ -49,16 +50,10 @@ classdef PhaseField < BaseModel
                        'omega'    , ...
                        'kT'};
             
-            % fdnames = {'N'                    , ...
-            %            'epsilon'              , ...
-            %            'mobilityFunc'         , ...
-            %            'dMobilityFunc'        , ...
-            %            'energyFunc'           , ...
-            %            'boundaryConditionType', ...
-            %            'boundaryValue'};
-
             model = dispatchParams(model, inputparams, fdnames);
 
+
+            model.operators = model.setupOperators();
             
             % when more parameters are used 
             % 
@@ -147,6 +142,21 @@ classdef PhaseField < BaseModel
             model = model.registerPropFunction({'massAccumC', fn, {'c'}});
             
         end
+        
+        function operators = setupOperators(model)
+
+            np  = model.np;
+            nPt = model.N + 1;
+
+            indInnerBc = (1 : np)';
+            indInnerBc = 1 + nPt*(indInnerBc - 1);
+            
+            indBc = nPt*(1 : np)';
+
+            operators = struct('indBc', indBc, ...
+                               'indInnerBc', indInnerBc);
+
+        end
 
         function model = setupForSimulation(model)
             
@@ -225,29 +235,36 @@ classdef PhaseField < BaseModel
                 chebDDA(:, iIdx) = 4 .* chebDA(:, iIdx-1) + 2 .* x .* chebDDA(:, iIdx-1) - chebDDA(:, iIdx-2);
             end
 
+            np = model.np;
+
+            chebA   = repmat({chebA}, 1, np);
+            chebDA  = repmat({chebDA}, 1, np);
+            chebDDA = repmat({chebDDA}, 1, np);
+            
             % assign to model properties
-            model.A   = chebA;
-            model.dA  = chebDA;
-            model.ddA = chebDDA;
+            model.A   = blkdiag(chebA{:});
+            model.dA  = blkdiag(chebDA{:});
+            model.ddA = blkdiag(chebDDA{:});
 
         end
 
         function initstate = setupInitialState(model)
+
             % initialize value of concentration
             numPoints = model.N + 1;
 
+            np = model.np;
             % 1. ------------------------------------------------
             % with a random perturbation aroud the mean value 0.5
-            rng(10); % to keep the same random perturbation
-            mean = 0.50;
-            cInit = mean + 0.02 * randn(numPoints, 1);
-            disp('c =');
-            disp(cInit');
+            for ip = 1 : np
+                rng(ip); % to keep the same random perturbation
+                mean = 0.50;
+                cInit{ip} = mean + 0.02 * randn(numPoints, 1);
+            end
+            cInit = vertcat(cInit{:});
+
             % compute initial coefficients of c by inverting matrix A
             coefCInit = model.A \ cInit;
-            % coefCInit = zeros(numPoints, 1);
-            disp('coeffs de c =');
-            disp(coefCInit');
 
             % % 2. ---------------------------------------------------
             % % smooth perturbation : we define the coefficients first
@@ -330,8 +347,6 @@ classdef PhaseField < BaseModel
         function state = updateMassAccumC(model, state, state0, dt)
 
             state.massAccumC = (1/dt) .* (state.c - state0.c);
-            disp('massAccum = ');
-            disp(state.massAccumC);
 
         end
         
@@ -339,6 +354,7 @@ classdef PhaseField < BaseModel
             % Residual form of :
             % dc/dt - dMobility(c) * dc/dx * dw/dx - Mobility(c) * d2w/dx2 = 0
 
+            
             massAccumC = state.massAccumC;
             c          = state.c;
             dC         = state.dC;
@@ -347,14 +363,15 @@ classdef PhaseField < BaseModel
 
             mobility  = model.mobilityFunc(c);
             dMobility = model.dMobilityFunc(c);
+            op        = model.operators;
 
             eqC = massAccumC - dMobility .* dC .* dW - mobility .* ddW;
 
             % Neumman boundary condition : dc/dn = 0
             % -> flat concentration profile at the boundary
             % 1D case : dc/dx = 0
-            eqC(1)   = dC(1);
-            eqC(end) = dC(end);
+            eqC(op.indInnerBc) = dC(op.indInnerBc);
+            eqC(op.indBc)      = dC(op.indBc);
             
             state.eqC = eqC;
 
@@ -371,6 +388,7 @@ classdef PhaseField < BaseModel
             
             F        = model.energyFunc(c);
             mobility = model.mobilityFunc(c);
+            op       = model.operators;
 
             epsi     = model.epsilon;
             
@@ -379,13 +397,21 @@ classdef PhaseField < BaseModel
             % Neumann boundary condition 
             % flux is given by J = -M(c) * grad(w) = -M(c) * dw/dx in 1D
             % we want the residual to be M(c) * dw/dx - J = 0
-            eqW(1)   = dW(1);
-            eqW(end) = mobility(end) .* dW(end) - bdFlux;
+            eqW(op.indInnerBc) = dW(op.indInnerBc);
+            eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) - bdFlux;
 
             state.eqW = eqW;
             
         end
         
+        function [state, report] = updateState(model, state, problem, dx, drivingForces)
+
+            [state, report] = updateState@BaseModel(model, state, problem, dx, drivingForces);
+
+            % cmin = model.cmin;
+            % state.(elyte).c = max(cmin, state.(elyte).c);
+
+        end
     end
     
 end
