@@ -243,7 +243,7 @@ yline(0, 'k--', 'LineWidth', 0.5);
 times   = cellfun(@(s) s.time, states);
 nStates = numel(states);
 nTrail  = 10; % number of trailing curves
-cmap    = nebula(nTrail);
+cmap    = turbo(nTrail);
 
 % create figure with slider
 fig = figure;
