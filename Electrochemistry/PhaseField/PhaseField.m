@@ -158,7 +158,6 @@ classdef PhaseField < BaseModel
 
         function forces = getValidDrivingForces(model)
             % needed by MRST
-            
             forces = getValidDrivingForces@PhysicalModel(model);
             forces.src = [];
 
@@ -171,7 +170,7 @@ classdef PhaseField < BaseModel
         end
 
         function [c1, c2] = getEquilibriumValues(model)
-
+            % compute concentrations at the 'dips' of the double well curve
             c0 = 0.1;
             c1 = fzero(model.energyFunc, c0);
             
@@ -194,6 +193,7 @@ classdef PhaseField < BaseModel
         end
 
         function state = updateBdFlux(model, state, drivingForces)
+            % update the flux boundary condition at x=1 
 
             time = state.time;
             state.bdFlux = drivingForces.src(time);
@@ -248,20 +248,27 @@ classdef PhaseField < BaseModel
 
             % 1. ------------------------------------------------
             % with a random perturbation aroud the mean value 0.5
-            % mean = 0.4;
-            % cInit = mean + 0.01 * randn(numPoints, 1);
-            % % compute initial coefficients of c by inverting matrix A
-            % coefCInit = model.A \ cInit;
+            rng(10); % to keep the same random perturbation
+            mean = 0.50;
+            cInit = mean + 0.02 * randn(numPoints, 1);
+            disp('c =');
+            disp(cInit');
+            % compute initial coefficients of c by inverting matrix A
+            coefCInit = model.A \ cInit;
+            % coefCInit = zeros(numPoints, 1);
+            disp('coeffs de c =');
+            disp(coefCInit');
 
             % % 2. ---------------------------------------------------
-            % smooth perturbation : we define the coefficients first
-            rng(10);
-            coefCInit    = zeros(numPoints, 1);
-            coefCInit(1) = 0.3;                              % T_0 : mean concentration
-            nModes       = 10;                                  % only first modes
-            coefCInit(2 : nModes + 1) = 0.01 * randn(nModes, 1);
-            % recompute cInit from the spectral coefficients
-            cInit = model.A * coefCInit;
+            % % smooth perturbation : we define the coefficients first
+            % rng(10); % to keep the same random perturbation
+            % mean = 0.3;
+            % coefCInit    = zeros(numPoints, 1);
+            % coefCInit(1) = mean;                   % T_0 : mean concentration
+            % nModes       = 10;                     % only first modes
+            % coefCInit(2 : nModes + 1) = 0.01 * randn(nModes, 1);
+            % % recompute cInit from the spectral coefficients
+            % cInit = model.A * coefCInit;
 
 
             % compute ddC to compute w0
@@ -270,6 +277,7 @@ classdef PhaseField < BaseModel
             
             % compute initial coefficients of w 
             coefWInit = model.A \ wInit;
+            % coefWInit = zeros(numPoints, 1);
             
             % initialize primary variables
             initstate.coefC = coefCInit;
@@ -325,6 +333,8 @@ classdef PhaseField < BaseModel
         function state = updateMassAccumC(model, state, state0, dt)
 
             state.massAccumC = (1/dt) .* (state.c - state0.c);
+            disp('massAccum = ');
+            disp(state.massAccumC);
 
         end
         
@@ -346,7 +356,6 @@ classdef PhaseField < BaseModel
             % Neumman boundary condition : dc/dn = 0
             % -> flat concentration profile at the boundary
             % 1D case : dc/dx = 0
-            
             eqC(1)   = dC(1);
             eqC(end) = dC(end);
             
@@ -370,12 +379,11 @@ classdef PhaseField < BaseModel
             
             eqW = w + epsi^2 .* ddC - F;
 
-            % Neumann boundary condition : dw/dn = 0
-            % -> zero flux at the boundary
-            % 1D case : dw/dx = 0
-
+            % Neumann boundary condition 
+            % flux is given by J = -M(c) * grad(w) = -M(c) * dw/dx in 1D
+            % we want the residual to be M(c) * dw/dx - J = 0
             eqW(1)   = dW(1);
-            eqW(end) = mobility(end).*dW(end) - bdFlux;
+            eqW(end) = mobility(end) .* dW(end) - bdFlux;
 
             state.eqW = eqW;
             
