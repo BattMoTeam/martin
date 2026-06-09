@@ -18,8 +18,8 @@ classdef PhaseField < BaseModel
         kT    % appears in the expression of the energy
               % value normalised for now
         
-        % boundaryConditionType % 'neumann' or 'dirichlet'
-        % boundaryValue         % boundary values [left, right]
+        % Advanced parameters
+        np % Number of particles (will be set when initialized from above)
         
         %% Helper structures
         
@@ -69,7 +69,6 @@ classdef PhaseField < BaseModel
             model.dMobilityFunc = setupFunction(model.dMobility);
             func                = setupFunction(model.energy);
             model.energyFunc    = @(c) func(c, model.omega, model.kT);
-            
             
             model = model.setupSpectralModel();
 
@@ -152,8 +151,9 @@ classdef PhaseField < BaseModel
         function model = setupForSimulation(model)
             
             model = model.equipModelForComputation();
+
             % model = model.setupScalings([]);
-            % 
+            
         end
 
         function forces = getValidDrivingForces(model)
@@ -170,6 +170,7 @@ classdef PhaseField < BaseModel
         end
 
         function [c1, c2] = getEquilibriumValues(model)
+
             % compute concentrations at the 'dips' of the double well curve
             c0 = 0.1;
             c1 = fzero(model.energyFunc, c0);
@@ -183,20 +184,9 @@ classdef PhaseField < BaseModel
             % returns the N+1 Chebyshev-Lobatto nodes on [-1, 1] : x_j = cos(pi*j/N), j=0..N
             % sorted in ascending order from -1 to 1
             
-            jIdx = (0:N)';
+            jIdx = (0 : N)';
             
-            % size(jIdx)
-            % size(N)
-
             x = flipud(cos(pi * jIdx / N));
-
-        end
-
-        function state = updateBdFlux(model, state, drivingForces)
-            % update the flux boundary condition at x=1 
-
-            time = state.time;
-            state.bdFlux = drivingForces.src(time);
 
         end
 
@@ -293,6 +283,13 @@ classdef PhaseField < BaseModel
 
         end
         
+        function state = updateBdFlux(model, state, drivingForces)
+            % update the flux boundary condition at x=1 
+
+            time = state.time;
+            state.bdFlux = drivingForces.src(time);
+
+        end
         
         function state = updateC(model, state)
 
