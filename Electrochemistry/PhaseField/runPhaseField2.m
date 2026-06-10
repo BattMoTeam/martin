@@ -49,6 +49,7 @@ simsetup.model.verbose = true;
 model = simsetup.model;
 
 x = model.chebyshevNodes(model.N);  
+[c1, c2] = model.getEquilibriumValues();
 
 
 
@@ -241,18 +242,23 @@ yline(0, 'k--', 'LineWidth', 0.5);
 
 %% Interactive visualization with slider for multiples particles
 
-op = model.operators;
-indInnerBc = op.indInnerBc;
-nPt = model.N + 1;
 np = model.np;
-   
-
 times   = cellfun(@(s) s.time, states);
 nStates = numel(states);
-nTrail  = 10; % number of trailing curves
-cmap    = turbo(nTrail);
 
-% create figure with slider
+% vis parameters into a struct
+op = model.operators;
+
+plotParams.x            = x;
+plotParams.nTrail       = 1;  % number of trailing curves
+plotParams.cmap         = turbo(plotParams.nTrail);
+plotParams.c0           = simsetup.initstate.c;
+plotParams.indInnerBc   = op.indInnerBc;
+plotParams.nPt          = model.N + 1;
+plotParams.np           = np;
+plotParams.ipSelected = 1;  % default : show all particles
+
+% create figure 
 fig = figure;
 ax  = axes(fig, 'Position', [0.1, 0.2, 0.85, 0.75]);
 xlabel(ax, 'x');
@@ -261,53 +267,92 @@ grid(ax, 'on');
 ylim(ax, [0, 1]);
 hold(ax, 'on');
 
-% compute initial state
-c0 = simsetup.initstate.c;
 
-% slider
+% time slider
 sld = uicontrol(fig, 'Style', 'slider', ...
                 'Min', 1, 'Max', nStates, 'Value', 1, ...
                 'SliderStep', [1/(nStates-1), 10/(nStates-1)], ...
                 'Position', [80, 20, 640, 20]);
 
-% label showing current state and time
+% time label 
 lbl = uicontrol(fig, 'Style', 'text', ...
                 'Position', [80, 45, 640, 20], ...
                 'String', 'state 1');
 
-% slider handler : using continuous value change to check and plot on
-% release & while sliding the cursor (might have to change if too slow)
-addlistener(sld, 'ContinuousValueChange', @(src, ~) updatePlot(src, ax, states, times, x, nTrail, cmap, lbl, c0, indInnerBc, nPt, np));
-% addlistener(sld, '', @(src, ~) updatePlot(src, ax, states, times, x, nTrail, cmap, lbl, c0));
+% particle selection buttons
+bgParticle = uibuttongroup(fig, ...
+    'Title',    'Particle', ...
+    'Position', [0.02, 0.15, 0.05, 0.75]);
+
+% 'all' button at the top
+uicontrol(bgParticle, 'Style', 'radiobutton', ...
+          'String',   'all', ...
+          'Tag',      '0', ...
+          'Position', [5, np * 28 + 5, 70, 22], ...
+          'Value',    1);
+
+% one button per particle
+for ip = 1 : np
+    uicontrol(bgParticle, 'Style', 'radiobutton', ...
+              'String',   sprintf('p %d', ip), ...
+              'Tag',      sprintf('%d', ip), ...
+              'Position', [5, (np - ip) * 28 + 5, 70, 22], ...
+              'Value',    0);
+end
+
+% particle selection callback
+bgParticle.SelectionChangedFcn = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, src);
+
+% slider handler 
+addlistener(sld, 'ContinuousValueChange', @(src, ~) updatePlot(src, ax, states, times, lbl, plotParams, bgParticle));
 
 
 % draw first step
-updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0, indInnerBc, nPt, np);
+updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle);
 
-function updatePlot(sld, ax, states, times, x, nTrail, cmap, lbl, c0, indInnerBc, nPt, np)
+function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle)
 
     % check that all graphics objects are still valid
     if ~isvalid(sld) || ~isvalid(ax) || ~isvalid(lbl)
         return;
     end
 
+    % retrieve plot params
+    x            = plotParams.x;
+    nTrail       = plotParams.nTrail;  
+    cmap         = plotParams.cmap;
+    c0           = plotParams.c0;
+    indInnerBc   = plotParams.indInnerBc;
+    nPt          = plotParams.nPt;
+    np           = plotParams.np;
+
+    % get selected particle from button group 
+    ipTag      = str2double(bgParticle.SelectedObject.Tag);
+    if ipTag == 0
+        ipList = 1 : np;  % show all particles
+    else
+        ipList = ipTag;   % show only selected particle
+    end
+
+    
     iState = round(sld.Value);
     cla(ax); % clear axes but keep settings
     hold(ax, 'on');
 
     % keep initial state displayed
-    for ip = 1 : np
+    for ip = ipList
         idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
-        plot(ax, x, c0(idx), 'k--', 'LineWidth', 1, 'DisplayName','initial');
+        plot(ax, x, c0(idx), 'k-', 'LineWidth', 1, 'DisplayName','initial');
     end
-
+    
+    % main plot
     iStart = max(1, iState - nTrail + 1);
     nDrawn = iState - iStart + 1;
     for iTrail = iStart : iState
         alpha    = (iTrail - iStart + 1) / nDrawn; % 0 = oldest, 1 = newest
         trailIdx = round(alpha * (nTrail - 1)) + 1;
         c        = states{iTrail}.c;
-        for ip = 1 : np
+        for ip = ipList
             idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
             plot(ax, x, c(idx), ...
                  'Color',     [cmap(trailIdx, :), alpha], ...

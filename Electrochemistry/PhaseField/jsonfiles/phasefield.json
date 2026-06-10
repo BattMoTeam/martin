@@ -16,6 +16,6 @@
     "argumentList"   : ["c", "omega", "kT"],
     "functionName"   : "computePhaseFieldEnergy"
   },
-  "omega"   : 2.5,
+  "omega"   : 2.29,
   "kT"      : 1
 }

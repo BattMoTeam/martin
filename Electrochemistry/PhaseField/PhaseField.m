@@ -212,11 +212,11 @@ classdef PhaseField < BaseModel
 
             x = model.chebyshevNodes(model.N);      % column vector (N+1)x1
 
-            numPoints = model.N + 1;
+            nPt = model.N + 1;
 
-            chebA   = zeros(numPoints, numPoints);
-            chebDA  = zeros(numPoints, numPoints);
-            chebDDA = zeros(numPoints, numPoints);
+            chebA   = zeros(nPt, nPt);
+            chebDA  = zeros(nPt, nPt);
+            chebDDA = zeros(nPt, nPt);
 
             % init: degrees 0 and 1 (columns 1 and 2)
             chebA(:, 1)   = 1;              % T_0(x)   = 1
@@ -229,7 +229,7 @@ classdef PhaseField < BaseModel
             chebDDA(:, 2) = 0;              % T''_1(x) = 0
 
             % recurrence for degrees 2..N (columns 3..N+1)
-            for iIdx = 3:numPoints
+            for iIdx = 3:nPt
                 chebA(:, iIdx)   = 2 .* x .* chebA(:, iIdx-1)   - chebA(:, iIdx-2);
                 chebDA(:, iIdx)  = 2 .* chebA(:, iIdx-1)  + 2 .* x .* chebDA(:, iIdx-1)  - chebDA(:, iIdx-2);
                 chebDDA(:, iIdx) = 4 .* chebDA(:, iIdx-1) + 2 .* x .* chebDDA(:, iIdx-1) - chebDDA(:, iIdx-2);
@@ -251,7 +251,7 @@ classdef PhaseField < BaseModel
         function initstate = setupInitialState(model)
 
             % initialize value of concentration
-            numPoints = model.N + 1;
+            nPt = model.N + 1;
 
             np = model.np;
             % 1. ------------------------------------------------
@@ -259,7 +259,7 @@ classdef PhaseField < BaseModel
             for ip = 1 : np
                 rng(ip); % to keep the same random perturbation
                 mean = 0.50;
-                cInit{ip} = mean + 0.02 * randn(numPoints, 1);
+                cInit{ip} = mean + 0.02 * randn(nPt, 1);
             end
             cInit = vertcat(cInit{:});
 
@@ -270,7 +270,7 @@ classdef PhaseField < BaseModel
             % % smooth perturbation : we define the coefficients first
             % rng(10); % to keep the same random perturbation
             % mean = 0.3;
-            % coefCInit    = zeros(numPoints, 1);
+            % coefCInit    = zeros(nPt, 1);
             % coefCInit(1) = mean;                   % T_0 : mean concentration
             % nModes       = 10;                     % only first modes
             % coefCInit(2 : nModes + 1) = 0.01 * randn(nModes, 1);
@@ -284,7 +284,7 @@ classdef PhaseField < BaseModel
             
             % compute initial coefficients of w 
             coefWInit = model.A \ wInit;
-            % coefWInit = zeros(numPoints, 1);
+            % coefWInit = zeros(nPt, 1);
             
             % initialize primary variables
             initstate.coefC = coefCInit;
