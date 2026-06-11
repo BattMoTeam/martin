@@ -106,30 +106,39 @@ classdef PhaseField < BaseModel
             varnames{end + 1} = 'massAccumC';
             % boundary flux at the right boundary
             varnames{end + 1} = 'bdFlux';            
-
-            % debugging
+            % temperature
+            varnames{end + 1} = 'T';
+            % average concentration mol/m^3
             varnames{end + 1} = 'cAverage';
+            % surface concentration mol/m^3
             varnames{end + 1} = 'cSurface';
             
             model = model.registerVarNames(varnames);
 
             if model.isRootSimulationModel
+
                 model = model.registerVarName('time');
                 model = model.setAsStaticVarName('time');
+                model = model.setAsExtraVarName('cSurface');
+                
             else
+                
                 varnames = {};
-                varnames{end + 1} = 'T';
                 varnames{end + 1} = 'Rvol';
                 model = model.registerVarNames(varnames);
+
             end
             
             model = model.setAsExtraVarName('cAverage');
 
             if model.isRootSimulationModel
+                
                 inputnames = {'time'};
                 fn = @ProtonicMembrane.updateBdFluxFromTime;
                 fn = {fn, @(propfunction) PropFunction.drivingForceFuncCallSetupFn(propfunction)};
                 model = model.registerPropFunction({'bdFlux', fn, inputnames});
+                model = model.registerPropFunction({'T', fn, inputnames});
+                
             else
                 fn = @PhaseField.updateBdFlux;
                 model = model.registerPropFunction({'bdFlux', fn, {'Rvol'}});
