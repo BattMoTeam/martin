@@ -4,15 +4,8 @@ classdef ActiveMaterialInputParams < ComponentInputParams
 % 
     properties
         
-        %
-        % Input parameter for the  interface :class:`InterfaceInputParams <Electrochemistry.InterfaceInputParams>`
-        %
         Interface
-        %
-        % Input parameter for the solid diffusion model  :class:`SolidDiffusionModelInputParams <Electrochemistry.SolidDiffusionModelInputParams>`
-        %
         SolidDiffusion
-
         LithiumPlating
         
         %% Standard parameters
@@ -90,6 +83,10 @@ classdef ActiveMaterialInputParams < ComponentInputParams
                     jsonstruct = equalizeJsonStructField(jsonstruct, {sd, 'saturationConcentration'}, {itf, 'saturationConcentration'});
                 end
 
+              case {'phasefield'}
+
+                % nothing here
+                
               otherwise
                 
                 error('Unknown diffusionModelType %s', diffusionModelType);
@@ -158,6 +155,10 @@ classdef ActiveMaterialInputParams < ComponentInputParams
                 
                 inputparams.(sd) = FullSolidDiffusionSwellingModelInputParams(pickField(jsonstruct, sd));
 
+              case 'phasefield'
+
+                inputparams.(sd) = PhaseFieldInputParams(pickField(jsonstruct, sd));
+                
               otherwise
                 
                 error('Unknown diffusionModelType %s', diffusionModelType);

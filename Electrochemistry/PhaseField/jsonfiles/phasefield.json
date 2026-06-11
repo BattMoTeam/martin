@@ -17,5 +17,5 @@
     "functionName"   : "computePhaseFieldEnergy"
   },
   "omega"   : 2.29,
-  "kT"      : 1
-}
+  "kT"      : 1,
+  "volumetricSurfaceArea" : 1878260}

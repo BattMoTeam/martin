@@ -224,7 +224,7 @@ classdef Coating < ElectronicComponent
                     end
                     
                     switch inputparams.(am).diffusionModelType
-                      case {'full', 'swelling'}
+                      case {'full', 'swelling', 'phasefield'}
                         inputparams.(am).(sd).np = np;
                       case {'simple'}
                         % do nothing

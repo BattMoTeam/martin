@@ -18,8 +18,11 @@ classdef PhaseField < BaseModel
         kT    % appears in the expression of the energy
               % value normalised for now
         
+        volumetricSurfaceArea         % surface area of the active material - electrolyte interface per volume of electrode
+        
         % Advanced parameters
         np % Number of particles (will be set when initialized from above)
+        volumeFraction
         
         %% Helper structures
         
@@ -41,14 +44,16 @@ classdef PhaseField < BaseModel
         %
             model = model@BaseModel();
 
-            fdnames = {'N'        , ...
-                       'np'       , ...
-                       'epsilon'  , ...
-                       'mobility' , ...
-                       'dMobility', ...
-                       'energy'   , ...
-                       'omega'    , ...
-                       'kT'};
+            fdnames = {'N'             , ...
+                       'np'            , ...
+                       'volumeFraction', ...
+                       'epsilon'       , ...
+                       'mobility'      , ...
+                       'dMobility'     , ...
+                       'energy'        , ...
+                       'omega'         , ...
+                       'kT'            , ...
+                       'volumetricSurfaceArea'};
             
             model = dispatchParams(model, inputparams, fdnames);
 
@@ -100,18 +105,41 @@ classdef PhaseField < BaseModel
             % accumulation term for c
             varnames{end + 1} = 'massAccumC';
             % boundary flux at the right boundary
-            varnames{end + 1} = 'time';
-            % boundary flux at the right boundary
             varnames{end + 1} = 'bdFlux';            
 
+            % debugging
+            varnames{end + 1} = 'cAverage';
+            varnames{end + 1} = 'cSurface';
+            
             model = model.registerVarNames(varnames);
 
-            model = model.setAsStaticVarName('time');
+            if model.isRootSimulationModel
+                model = model.registerVarName('time');
+                model = model.setAsStaticVarName('time');
+            else
+                varnames = {};
+                varnames{end + 1} = 'T';
+                varnames{end + 1} = 'Rvol';
+                model = model.registerVarNames(varnames);
+            end
             
-            inputnames = {'time'};
-            fn = @ProtonicMembrane.updateBdFlux;
-            fn = {fn, @(propfunction) PropFunction.drivingForceFuncCallSetupFn(propfunction)};
-            model = model.registerPropFunction({'bdFlux', fn, inputnames});
+            model = model.setAsExtraVarName('cAverage');
+
+            if model.isRootSimulationModel
+                inputnames = {'time'};
+                fn = @ProtonicMembrane.updateBdFluxFromTime;
+                fn = {fn, @(propfunction) PropFunction.drivingForceFuncCallSetupFn(propfunction)};
+                model = model.registerPropFunction({'bdFlux', fn, inputnames});
+            else
+                fn = @PhaseField.updateBdFlux;
+                model = model.registerPropFunction({'bdFlux', fn, {'Rvol'}});
+            end
+
+            fn = @PhaseField.updateAverageConcentration;
+            model = model.registerPropFunction({'cAverage', fn, {'c'}});
+            
+            fn = @PhaseField.updateCsurface;
+            model = model.registerPropFunction({'cSurface', fn, {'c'}});
             
             fn = @PhaseField.updateC;
             model = model.registerPropFunction({'c', fn, {'coefC'}});
@@ -300,12 +328,22 @@ classdef PhaseField < BaseModel
 
         end
         
-        function state = updateBdFlux(model, state, drivingForces)
+        function state = updateBdFluxFromTime(model, state, drivingForces)
             % update the flux boundary condition at x=1 
 
             time = state.time;
             state.bdFlux = drivingForces.src(time);
 
+        end
+
+        function state = updateCsurface(model, state)
+        % update cSurface
+        % NOTE : cSurface is mol/m^3 while c is without unit
+        end
+        function state = updateBdFlux(model, state)
+
+            % to be completed
+            
         end
         
         function state = updateC(model, state)

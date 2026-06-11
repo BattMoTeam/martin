@@ -25,10 +25,13 @@ classdef PhaseFieldInputParams < InputParams
               % is related to the nearest-neighbor interaction strength between lithium ions within the host
         kT    % appears in the expression of the energy
               % value normalised for now
-              
+
+        volumetricSurfaceArea         % surface area of the active material - electrolyte interface per volume of electrode
+        
         % Advanced parameters
         np % Number of particles (will be set when initialized from above)
-
+        volumeFraction % 
+        
     end
     
     methods

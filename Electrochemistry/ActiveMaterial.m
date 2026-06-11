@@ -9,7 +9,8 @@ classdef ActiveMaterial < BaseModel
         %% Sub-Models
         
         Interface
-        SolidDiffusion        
+        SolidDiffusion
+        PhaseField
         LithiumPlating
         
         %% Input parameters
@@ -23,7 +24,7 @@ classdef ActiveMaterial < BaseModel
         thermalConductivity    % the intrinsic Thermal conductivity of the active component
         specificHeatCapacity   % Specific Heat capacity of the active component
 
-        diffusionModelType     % either 'full', 'simple', 'swelling'
+        diffusionModelType     % either 'full', 'simple', 'swelling', 'phasefield'
 
         %% SEI layer model choice
         SEImodel % string defining the sei model, see schema Utilities/JsonSchemas/ActiveMaterial.schema.json. Can take value
@@ -81,6 +82,8 @@ classdef ActiveMaterial < BaseModel
                 model.SolidDiffusion = FullSolidDiffusionModel(inputparams.SolidDiffusion);
               case 'swelling'
                 model.SolidDiffusion = FullSolidDiffusionSwellingModel(inputparams.SolidDiffusion);
+              case 'phasefield'
+                model.SolidDiffusion = PhaseField(inputparams.SolidDiffusion);
               otherwise
                 error('Unknown diffusionModelType %s', diffusionModelType);
             end
