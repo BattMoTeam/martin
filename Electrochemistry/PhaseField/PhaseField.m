@@ -290,7 +290,7 @@ classdef PhaseField < BaseModel
         function initstate = setupInitialState(model)
 
             %
-            Tinit = 298;
+            Tinit = 1/PhysicalConstants.kb;
             
             % initialize value of concentration
             nPt = model.N + 1;
@@ -347,7 +347,8 @@ classdef PhaseField < BaseModel
 
             time = state.time;
             state.bdFlux = drivingForces.src(time);
-
+            state.T = 1/PhysicalConstants.kb;
+            
         end
 
         function state = updateCsurface(model, state)

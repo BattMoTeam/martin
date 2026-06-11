@@ -48,9 +48,10 @@ simsetup.model.verbose = true;
 [states, globvars, reports] = simsetup.run();
 model = simsetup.model;
 
-x = model.chebyshevNodes(model.N);  
-[c1, c2] = model.getEquilibriumValues();
+%%
 
+x = model.chebyshevNodes(model.N);  
+[c1, c2] = model.getEquilibriumValues(1/PhysicalConstants.kb);
 
 
 % %% Figure 1 : energy functions
@@ -93,8 +94,6 @@ ylabel('J_{in}');
 title('Boundary flux control at x = 1');
 grid on;
 yline(0, 'k--', 'LineWidth', 0.5);
-
-
 
 
 % %% Figure 2 : concentration profiles
