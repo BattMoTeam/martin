@@ -502,6 +502,10 @@ classdef GenericBattery < BaseModel
                         scalings{end + 1} = {{elde, co, amc, sd, 'massCons'}, coef};
                         scalings{end + 1} = {{elde, co, amc, sd, 'solidDiffusionEq'}, coef};
 
+                      case {'phasefield'}
+
+                        % TO BE ADDED
+
                       otherwise
 
                         error('diffusionModelType not recognized');
