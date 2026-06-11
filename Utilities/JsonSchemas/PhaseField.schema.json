@@ -28,7 +28,7 @@
         {"$ref": "Function.schema.json"},
         { "properties" : {
           "argumentList": {"type" : "array",
-                           "prefixItems": [{"const": "c"}]
+                           "prefixItems": [{"const": "c"}, {"const" : "T"}]
                           }}}],
       "description" : "free energy function"},
     

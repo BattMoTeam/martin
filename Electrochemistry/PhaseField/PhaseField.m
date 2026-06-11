@@ -68,7 +68,7 @@ classdef PhaseField < BaseModel
             model.mobilityFunc  = setupFunction(model.mobility);
             model.dMobilityFunc = setupFunction(model.dMobility);
             func                = setupFunction(model.energy);
-            model.energyFunc    = @(c) func(c, model.omega, model.kT);
+            model.energyFunc    = @(c, T) func(c, T, model.omega);
             
             model = model.setupSpectralModel();
 
@@ -163,7 +163,7 @@ classdef PhaseField < BaseModel
             model = model.registerPropFunction({'eqC', fn, {'massAccumC', 'c', 'dC', 'dW', 'ddW'}});
 
             fn = @PhaseField.updateEqW;
-            model = model.registerPropFunction({'eqW', fn, {'w', 'ddC', 'c', 'bdFlux'}});
+            model = model.registerPropFunction({'eqW', fn, {'w', 'ddC', 'c', 'T', 'bdFlux'}});
 
             fn = @PhaseField.updateMassAccumC;
             fn = {fn, @(propfunction) PropFunction.accumFuncCallSetupFn(propfunction)};
@@ -207,14 +207,16 @@ classdef PhaseField < BaseModel
             
         end
 
-        function [c1, c2] = getEquilibriumValues(model)
+        function [c1, c2] = getEquilibriumValues(model, T)
+
+            func = @(c) model.energyFunc(c, T);
 
             % compute concentrations at the 'dips' of the double well curve
             c0 = 0.2;
-            c1 = fzero(model.energyFunc, c0);
+            c1 = fzero(func, c0);
             
             c0 = 0.8;
-            c2 = fzero(model.energyFunc, c0);
+            c2 = fzero(func, c0);
             
         end
 
@@ -278,6 +280,9 @@ classdef PhaseField < BaseModel
 
         function initstate = setupInitialState(model)
 
+            %
+            Tinit = 298;
+            
             % initialize value of concentration
             nPt = model.N + 1;
 
@@ -308,7 +313,7 @@ classdef PhaseField < BaseModel
 
             % compute ddC to compute w0
             ddCInit = model.ddA * coefCInit;
-            wInit = model.energyFunc(cInit) - model.epsilon^2 .* ddCInit;
+            wInit = model.energyFunc(cInit, Tinit) - model.epsilon^2 .* ddCInit;
             
             % compute initial coefficients of w 
             coefWInit = model.A \ wInit;
@@ -419,12 +424,13 @@ classdef PhaseField < BaseModel
             % Residual form of : w + d2c/dx2 - F(c) = 0
 
             c      = state.c;
+            T      = state.T;
             ddC    = state.ddC;
             w      = state.w;
             dW     = state.dW;
             bdFlux = state.bdFlux;
             
-            F        = model.energyFunc(c);
+            F        = model.energyFunc(c, T);
             mobility = model.mobilityFunc(c);
             op       = model.operators;
 
