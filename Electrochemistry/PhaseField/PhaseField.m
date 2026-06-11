@@ -182,10 +182,10 @@ classdef PhaseField < BaseModel
         function [c1, c2] = getEquilibriumValues(model)
 
             % compute concentrations at the 'dips' of the double well curve
-            c0 = 0.1;
+            c0 = 0.2;
             c1 = fzero(model.energyFunc, c0);
             
-            c0 = 0.9;
+            c0 = 0.8;
             c2 = fzero(model.energyFunc, c0);
             
         end
