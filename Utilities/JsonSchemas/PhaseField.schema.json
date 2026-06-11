@@ -1,0 +1,46 @@
+{
+  "$id": "file://./PhaseField.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "phase field model",
+  "type": "object",
+  "properties": {
+    "N" : {"type" : "number"
+           "description" : "discretization parameter"}
+    "mobility": {
+      "allOf": [
+        {"$ref": "Function.schema.json"},
+        { "properties" : {
+          "argumentList": {"type" : "array",
+                           "prefixItems": [{"const": "c"}]
+                          }}}],
+      "description" : "mobility function"},
+    "dMobility" : {
+      "allOf": [
+        {"$ref": "Function.schema.json"},
+        { "properties" : {
+          "argumentList": {"type" : "array",
+                           "prefixItems": [{"const": "c"}]
+                          }}}],
+      "description" : "derivative of mobility function"},
+    
+    "energy" : {
+      "allOf": [
+        {"$ref": "Function.schema.json"},
+        { "properties" : {
+          "argumentList": {"type" : "array",
+                           "prefixItems": [{"const": "c"}]
+                          }}}],
+      "description" : "free energy function"},
+    
+    "epsilon" : {
+      "type" : {"number"},
+      "description" :  "interface width parameter"},
+    "omega" : {
+      "type" : "number",
+      "description" :  "constant in the expression of the energy is related to the nearest-neighbor interaction strength between lithium ions within the host"},
+    "kT" : {
+      "type" : "number",
+      "description" :  "appears in the expression of the energy value normalised for now"},
+    "np" : {
+      "type" : "number"
+      "description" :  "Number of particles (will be set when initialized from above)"}}}
