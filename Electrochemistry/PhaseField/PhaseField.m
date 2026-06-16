@@ -321,7 +321,10 @@ classdef PhaseField < BaseModel
 
 
             % compute ddC to compute w0
-            ddCInit = model.ddA * coefCInit;
+            initstate.coefC = coefCInit;
+            initstate = model.updateDDC(initstate);
+            ddCInit = initstate.ddC;
+            
             wInit = model.energyFunc(cInit, Tinit) - model.epsilon^2 .* ddCInit;
             
             % compute initial coefficients of w 
@@ -335,10 +338,6 @@ classdef PhaseField < BaseModel
             % initialize other variables
             initstate.c   = cInit;
             initstate.w   = wInit;
-            initstate.dC  = model.dA  * coefCInit;
-            initstate.dW  = model.dA  * coefWInit;
-            initstate.ddC = ddCInit;
-            initstate.ddW = model.ddA * coefWInit;
 
         end
         
