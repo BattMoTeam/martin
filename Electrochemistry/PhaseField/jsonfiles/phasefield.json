@@ -1,6 +1,6 @@
 {
   "N"       : 60,
-  "epsilon" : 0.1,
+  "epsilon" : 1e-10,
   "kineticCoefficient" : 2.7154e-14,
   "comment" : "value of kinetic coefficient taken from Han et al paper (2024)",
   "particleRadius": 1.15e-06,
