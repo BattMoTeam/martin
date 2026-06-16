@@ -2,6 +2,7 @@
 jsonfilename = fullfile('ParameterData', 'BatteryCellParameters', 'LithiumIonBatteryCell', ...
                         'lithium_ion_battery_lnmo_graphite.json');
 jsonstruct_material = parseBattmoJson(jsonfilename);
+jsonstruct_material.use_thermal = false;
 
 filename = fullfile(battmoDir(), 'Electrochemistry', 'PhaseField', 'jsonfiles', 'phasefield.json');
 jsonstruct_phasefield = parseBattmoJson(filename);
