@@ -504,8 +504,16 @@ classdef GenericBattery < BaseModel
 
                       case {'phasefield'}
 
-                        % TO BE ADDED
+                        m0   = model.(elde).(co).(amc).(sd).kineticCoefficient; % scaling for mobility
+                        rp   = model.(elde).(co).(amc).(sd).particleRadius;
+                        cmax = model.(elde).(co).(amc).(sd).saturationConcentration;
+                        vf   = model.(elde).(co).(amc).(sd).volumeFraction;
 
+                        w0 = rp^2/(m0*vf*cmax)*RvolRef;
+                        model.(elde).(co).(amc).(sd).wScaling = w0;
+                        scalings{end + 1} = {{elde, co, amc, sd, 'eqC'}, w0*m0/rp^2};
+                        scalings{end + 1} = {{elde, co, amc, sd, 'eqW'}, w0};
+                        
                       otherwise
 
                         error('diffusionModelType not recognized');
