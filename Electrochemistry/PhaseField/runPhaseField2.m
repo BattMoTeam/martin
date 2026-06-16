@@ -16,10 +16,10 @@ simsetup = setupPhaseFieldSimulation(jsonstruct);
 %% Setup schedule
 % in this case only the time steps are given, no source term
 
-total = 5;
+total = 1;
 n     = 100;                       
 dt    = total / n;                  
-dts   = rampupTimesteps(total, dt, 5);
+dts   = rampupTimesteps(total, dt, 10);
 
 % define flux boundary condition function during the time of the simulation
 % the sign convension is that the outward flux is positive.
