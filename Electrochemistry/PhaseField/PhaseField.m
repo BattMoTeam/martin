@@ -17,7 +17,7 @@ classdef PhaseField < BaseModel
         dMobility % derivative of mobility function
         energy    % Free energy function
 
-        kineticCoefficient  % denoted L0 in ref1
+        kineticCoefficient  % denoted L0 in ref1 (used as scaling coefficient for mobility)
         particleRadius  
         
         epsilon % interface width parameter
@@ -43,6 +43,8 @@ classdef PhaseField < BaseModel
         dMobilityFunc % derivative of mobility function
         energyFunc    % Free energy function
 
+        wScaling % scaling value for w (also called w0 in code)
+        
     end
     
     methods
@@ -451,15 +453,20 @@ classdef PhaseField < BaseModel
 
             mobility  = model.mobilityFunc(c);
             dMobility = model.dMobilityFunc(c);
+            w0        = model.wScaling;
+            rp        = model.particleRadius;
+            m0        = model.kineticCoefficient; % scaling for the mobility
             op        = model.operators;
 
+            % scaling for this equation is (w0*m0)/(rp^2)
             eqC = massAccumC - dMobility .* dC .* dW - mobility .* ddW;
 
             % Neumman boundary condition : dc/dn = 0
             % -> flat concentration profile at the boundary
             % 1D case : dc/dx = 0
-            eqC(op.indInnerBc) = dC(op.indInnerBc);
-            eqC(op.indBc)      = dC(op.indBc);
+            scaling = ((w0*m0)/(rp^2))/(1/rp);
+            eqC(op.indInnerBc) = scaling*dC(op.indInnerBc);
+            eqC(op.indBc)      = scaling*dC(op.indBc);
             
             state.eqC = eqC;
 
@@ -477,17 +484,21 @@ classdef PhaseField < BaseModel
             
             F        = model.energyFunc(c, T);
             mobility = model.mobilityFunc(c);
+            w0       = model.wScaling;
+            m0       = model.kineticCoefficient; % scaling for mobility
+            rp       = model.particleRadius;
             op       = model.operators;
-
             epsi     = model.epsilon;
             
+            % scaling of equation is w0
             eqW = w + epsi^2 .* ddC - F;
 
             % Neumann boundary condition 
             % flux is given by J = -M(c) * grad(w) = -M(c) * dw/dx in 1D
             % we want the residual to be M(c) * dw/dx - J = 0
-            eqW(op.indInnerBc) = mobility(op.indInnerBc) .* dW(op.indInnerBc);
-            eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) + bdOutFlux;
+            scaling = w0/(m0*(w0/rp));
+            eqW(op.indInnerBc) = scaling*(mobility(op.indInnerBc) .* dW(op.indInnerBc));
+            eqW(op.indBc)      = scaling*(mobility(op.indBc) .* dW(op.indBc) + bdOutFlux);
 
             state.eqW = eqW;
             
