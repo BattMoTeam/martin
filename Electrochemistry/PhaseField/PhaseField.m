@@ -391,25 +391,34 @@ classdef PhaseField < BaseModel
         
         function state = updateDC(model, state)
 
-            state.dC = model.dA * state.coefC;
+            rp = model.particleRadius;
+            
+            state.dC = (2/rp) * model.dA * state.coefC;
 
         end
         
         function state = updateDW(model, state)
 
-            state.dW = model.dA * state.coefW;
+            rp = model.particleRadius;
+
+            state.dW = (2/rp) * model.dA * state.coefW;
 
         end
         
         function state = updateDDC(model, state)
 
-            state.ddC = model.ddA * state.coefC;
+            rp = model.particleRadius;
+            
+            state.ddC = (2/rp)^2 * model.ddA * state.coefC;
 
         end
         
         function state = updateDDW(model, state)
 
-            state.ddW = model.ddA * state.coefW;
+            rp = model.particleRadius;
+            
+            state.ddW = (2/rp)^2 * model.ddA * state.coefW;
+            
         end
 
 
