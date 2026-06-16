@@ -10,7 +10,6 @@ classdef ActiveMaterial < BaseModel
         
         Interface
         SolidDiffusion
-        PhaseField
         LithiumPlating
         
         %% Input parameters
