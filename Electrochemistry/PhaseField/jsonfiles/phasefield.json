@@ -22,6 +22,7 @@
     "argumentList"   : ["c", "T", "omega"],
     "functionName"   : "computePhaseFieldEnergy"
   },
-  "omega"   : 2.29,
-  "kT"      : 1,
-  "volumetricSurfaceArea" : 1878260}
+  "omega"   : 7.92e8,
+  "comment" : "value of omega taken from Han et al paper (2024)",
+  "kT"      : 3.45e8,
+  "comment" : "value of kT taken from Han et al paper (2024)"}
