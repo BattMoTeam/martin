@@ -68,7 +68,6 @@ classdef PhaseField < BaseModel
             
             model = dispatchParams(model, inputparams, fdnames);
 
-
             model.operators = model.setupOperators();
             
             % when more parameters are used 
@@ -368,7 +367,14 @@ classdef PhaseField < BaseModel
         function state = updateCsurface(model, state)
         % update cSurface
         % NOTE : cSurface is mol/m^3 while c is without unit
+
+            op = model.operators;
+            
+            state.cSurface = cmax*state.c(op.indBc);
+            
         end
+
+        
         function state = updateBdFlux(model, state)
 
             vf   = model.volumeFraction;
