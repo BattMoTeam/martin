@@ -5,6 +5,8 @@ function simsetup = setupPhaseFieldSimulation(jsonstruct, varargin)
     model = PhaseField(inputparams);
 
     model.isRootSimulationModel = true;
+
+    model.wScaling = 1;
     
     model = model.setupForSimulation();
     
