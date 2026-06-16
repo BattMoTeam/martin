@@ -476,7 +476,7 @@ classdef PhaseField < BaseModel
             % flux is given by J = -M(c) * grad(w) = -M(c) * dw/dx in 1D
             % we want the residual to be M(c) * dw/dx - J = 0
             eqW(op.indInnerBc) = mobility(op.indInnerBc) .* dW(op.indInnerBc);
-            eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) - bdFlux;
+            eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) + bdFlux;
 
             state.eqW = eqW;
             
