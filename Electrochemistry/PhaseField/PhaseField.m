@@ -119,8 +119,8 @@ classdef PhaseField < BaseModel
             varnames{end + 1} = 'eqW';
             % accumulation term for c
             varnames{end + 1} = 'massAccumC';
-            % boundary flux at the right boundary
-            varnames{end + 1} = 'bdFlux';            
+            % boundary flux at the right boundary (outward is positive)
+            varnames{end + 1} = 'bdOutFlux';
             % temperature
             varnames{end + 1} = 'T';
             % average concentration mol/m^3
@@ -151,12 +151,12 @@ classdef PhaseField < BaseModel
                 inputnames = {'time'};
                 fn = @ProtonicMembrane.updateBdFluxFromTime;
                 fn = {fn, @(propfunction) PropFunction.drivingForceFuncCallSetupFn(propfunction)};
-                model = model.registerPropFunction({'bdFlux', fn, inputnames});
+                model = model.registerPropFunction({'bdOutFlux', fn, inputnames});
                 model = model.registerPropFunction({'T', fn, inputnames});
                 
             else
                 fn = @PhaseField.updateBdFlux;
-                model = model.registerPropFunction({'bdFlux', fn, {'Rvol'}});
+                model = model.registerPropFunction({'bdOutFlux', fn, {'Rvol'}});
             end
 
             fn = @PhaseField.updateAverageConcentration;
@@ -187,7 +187,7 @@ classdef PhaseField < BaseModel
             model = model.registerPropFunction({'eqC', fn, {'massAccumC', 'c', 'dC', 'dW', 'ddW'}});
 
             fn = @PhaseField.updateEqW;
-            model = model.registerPropFunction({'eqW', fn, {'w', 'ddC', 'c', 'T', 'bdFlux'}});
+            model = model.registerPropFunction({'eqW', fn, {'w', 'ddC', 'c', 'T', 'bdOutFlux'}});
 
             fn = @PhaseField.updateMassAccumC;
             fn = {fn, @(propfunction) PropFunction.accumFuncCallSetupFn(propfunction)};
@@ -360,7 +360,7 @@ classdef PhaseField < BaseModel
             % update the flux boundary condition at x=1 
 
             time = state.time;
-            state.bdFlux = drivingForces.src(time);
+            state.bdOutFlux = drivingForces.src(time);
             state.T = 1/PhysicalConstants.kb;
             
         end
@@ -462,7 +462,7 @@ classdef PhaseField < BaseModel
             ddC    = state.ddC;
             w      = state.w;
             dW     = state.dW;
-            bdFlux = state.bdFlux;
+            bdOutFlux = state.bdOutFlux;
             
             F        = model.energyFunc(c, T);
             mobility = model.mobilityFunc(c);
@@ -476,7 +476,7 @@ classdef PhaseField < BaseModel
             % flux is given by J = -M(c) * grad(w) = -M(c) * dw/dx in 1D
             % we want the residual to be M(c) * dw/dx - J = 0
             eqW(op.indInnerBc) = mobility(op.indInnerBc) .* dW(op.indInnerBc);
-            eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) + bdFlux;
+            eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) + bdOutFlux;
 
             state.eqW = eqW;
             
