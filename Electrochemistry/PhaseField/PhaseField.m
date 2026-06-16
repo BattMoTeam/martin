@@ -475,6 +475,12 @@ classdef PhaseField < BaseModel
         function state = updateEqW(model, state)
             % Residual form of : w + d2c/dx2 - F(c) = 0
 
+            w0       = model.wScaling;
+            m0       = model.kineticCoefficient; % scaling for mobility
+            rp       = model.particleRadius;
+            op       = model.operators;
+            epsi     = model.epsilon;
+
             c         = state.c;
             T         = state.T;
             ddC       = state.ddC;
@@ -484,11 +490,6 @@ classdef PhaseField < BaseModel
             
             F        = model.energyFunc(c, T);
             mobility = model.mobilityFunc(c);
-            w0       = model.wScaling;
-            m0       = model.kineticCoefficient; % scaling for mobility
-            rp       = model.particleRadius;
-            op       = model.operators;
-            epsi     = model.epsilon;
             
             % scaling of equation is w0
             eqW = w + epsi^2 .* ddC - F;
