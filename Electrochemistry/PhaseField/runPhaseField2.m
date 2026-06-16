@@ -22,6 +22,7 @@ dt    = total / n;
 dts   = rampupTimesteps(total, dt, 5);
 
 % define flux boundary condition function during the time of the simulation
+% the sign convension is that the outward flux is positive.
 clear flux
 flux.functionFormat = 'tabulated';
 flux.argumentList   = {'time'};
