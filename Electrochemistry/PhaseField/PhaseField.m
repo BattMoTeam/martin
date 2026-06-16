@@ -1,4 +1,10 @@
 classdef PhaseField < BaseModel
+% @article{ref1,
+%   title   = {Electrochemical modeling of intercalation processes with phase field models},
+%   journal = {Electrochimica Acta},
+%   author  = {Han, B.C. and Van der Ven, A. and Morgan, D. and Ceder, G.},
+%   year    = 2004,
+% }
     
     properties
 
@@ -11,6 +17,9 @@ classdef PhaseField < BaseModel
         dMobility % derivative of mobility function
         energy    % Free energy function
 
+        kineticCoefficient  % denoted L0 in ref1
+        particleRadius  
+        
         epsilon % interface width parameter
 
         omega % constant in the expression of the energy
@@ -44,15 +53,17 @@ classdef PhaseField < BaseModel
         %
             model = model@BaseModel();
 
-            fdnames = {'N'             , ...
-                       'np'            , ...
-                       'volumeFraction', ...
-                       'epsilon'       , ...
-                       'mobility'      , ...
-                       'dMobility'     , ...
-                       'energy'        , ...
-                       'omega'         , ...
-                       'kT'            , ...
+            fdnames = {'N'                 , ...
+                       'np'                , ...
+                       'volumeFraction'    , ...
+                       'epsilon'           , ...
+                       'mobility'          , ...
+                       'dMobility'         , ...
+                       'energy'            , ...
+                       'kineticCoefficient', ...
+                       'particleRadius'    , ...
+                       'omega'             , ...
+                       'kT'                , ...
                        'volumetricSurfaceArea'};
             
             model = dispatchParams(model, inputparams, fdnames);
@@ -65,8 +76,12 @@ classdef PhaseField < BaseModel
             % func  = setupFunction(model.mobility)
             % model.mobilityFunc = @(c) func(c, model.p1, model.p2);
 
-            model.mobilityFunc  = setupFunction(model.mobility);
-            model.dMobilityFunc = setupFunction(model.dMobility);
+            func  = setupFunction(model.mobility);
+            model.mobilityFunc  = @(c) func(c, model.kineticCoefficient);
+            
+            func  = setupFunction(model.dMobility);
+            model.dMobilityFunc = @(c) func(c, model.kineticCoefficient);
+            
             func                = setupFunction(model.energy);
             model.energyFunc    = @(c, T) func(c, T, model.omega);
             
@@ -357,7 +372,8 @@ classdef PhaseField < BaseModel
         end
         function state = updateBdFlux(model, state)
 
-            % to be completed
+            Rvol = state.Rvol;
+            
             
         end
         
@@ -451,7 +467,7 @@ classdef PhaseField < BaseModel
             % Neumann boundary condition 
             % flux is given by J = -M(c) * grad(w) = -M(c) * dw/dx in 1D
             % we want the residual to be M(c) * dw/dx - J = 0
-            eqW(op.indInnerBc) = dW(op.indInnerBc);
+            eqW(op.indInnerBc) = mobility(op.indInnerBc) .* dW(op.indInnerBc);
             eqW(op.indBc)      = mobility(op.indBc) .* dW(op.indBc) - bdFlux;
 
             state.eqW = eqW;

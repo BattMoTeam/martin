@@ -1,6 +1,10 @@
 {
   "N"       : 60,
   "epsilon" : 0.1,
+  "kineticCoefficient" : 2.7154e-14,
+  "comment" : "value of kinetic coefficient taken from Han et al paper (2024)",
+  "particleRadius": 1.15e-06,
+  "comment" : "value of particle radius taken from Xu (2015)",
   "mobility" : {
     "functionFormat" : "named function",
     "argumentList"   : ["c"],

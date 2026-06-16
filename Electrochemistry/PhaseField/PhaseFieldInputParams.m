@@ -18,6 +18,12 @@ classdef PhaseFieldInputParams < InputParams
         % Free energy F(c) 
         energy
 
+        % Kinetic coefficient in m^2/J
+        kineticCoefficient  % denoted L0 in ref1
+
+        % Particle radius in m
+        particleRadius
+
         % Interface width parameter
         epsilon
 
