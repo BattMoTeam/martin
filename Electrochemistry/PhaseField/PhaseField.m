@@ -27,7 +27,7 @@ classdef PhaseField < BaseModel
         kT    % appears in the expression of the energy
               % value normalised for now
         
-        volumetricSurfaceArea         % surface area of the active material - electrolyte interface per volume of electrode
+        saturationConcentration % the saturation concentration of the guest molecule in the host material (symbol: cmax)
         
         % Advanced parameters
         np % Number of particles (will be set when initialized from above)
@@ -64,7 +64,7 @@ classdef PhaseField < BaseModel
                        'particleRadius'    , ...
                        'omega'             , ...
                        'kT'                , ...
-                       'volumetricSurfaceArea'};
+                       'saturationConcentration'};
             
             model = dispatchParams(model, inputparams, fdnames);
 

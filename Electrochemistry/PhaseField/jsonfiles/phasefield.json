@@ -5,6 +5,8 @@
   "comment" : "value of kinetic coefficient taken from Han et al paper (2024)",
   "particleRadius": 1.15e-06,
   "comment" : "value of particle radius taken from Xu (2015)",
+  "saturationConcentration" : 26390,
+  "comment" : "value of particle radius taken from Xu (2015)",
   "mobility" : {
     "functionFormat" : "named function",
     "argumentList"   : ["c"],
