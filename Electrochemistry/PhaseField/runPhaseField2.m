@@ -40,7 +40,7 @@ schedule = struct('control', control, 'step', step);
 simsetup.schedule = schedule;
 
 %% Run simulation
-
+simsetup.model.nonlinearTolerance = 1e-20;
 simsetup.model.verbose = true;
 % simsetup.run();
 
