@@ -371,8 +371,13 @@ classdef PhaseField < BaseModel
         end
         function state = updateBdFlux(model, state)
 
+            vf   = model.volumeFraction;
+            rp   = model.particleRadius;
+            cmax = model.saturationConcentration;
+            
             Rvol = state.Rvol;
             
+            state.bdOutFlux = (rp/(vf*cmax))*Rvol;
             
         end
         
