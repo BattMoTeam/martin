@@ -306,7 +306,7 @@ classdef PhaseField < BaseModel
         function initstate = setupInitialState(model)
 
             %
-            Tinit = 1/PhysicalConstants.kb;
+            Tinit = model.kT/PhysicalConstants.kb;
             
             % initialize value of concentration
             nPt = model.N + 1;
@@ -342,7 +342,7 @@ classdef PhaseField < BaseModel
             ddCInit = initstate.ddC;
             
             wInit = model.energyFunc(cInit, Tinit) - model.epsilon^2 .* ddCInit;
-            
+
             % compute initial coefficients of w 
             coefWInit = model.A \ wInit;
             % coefWInit = zeros(nPt, 1);
@@ -362,7 +362,7 @@ classdef PhaseField < BaseModel
 
             time = state.time;
             state.bdOutFlux = drivingForces.src(time);
-            state.T = 1/PhysicalConstants.kb;
+            state.T = model.kT/PhysicalConstants.kb;
             
         end
 
@@ -475,11 +475,11 @@ classdef PhaseField < BaseModel
         function state = updateEqW(model, state)
             % Residual form of : w + d2c/dx2 - F(c) = 0
 
-            c      = state.c;
-            T      = state.T;
-            ddC    = state.ddC;
-            w      = state.w;
-            dW     = state.dW;
+            c         = state.c;
+            T         = state.T;
+            ddC       = state.ddC;
+            w         = state.w;
+            dW        = state.dW;
             bdOutFlux = state.bdOutFlux;
             
             F        = model.energyFunc(c, T);
