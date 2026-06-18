@@ -68,8 +68,12 @@ classdef PhaseField < BaseModel
             model.mobilityFunc  = setupFunction(model.mobility);
             model.dMobilityFunc = setupFunction(model.dMobility);
             func                = setupFunction(model.energy);
-            model.energyFunc    = @(c, T) func(c, T, model.omega);
-            
+            % Avec T
+            % model.energyFunc    = @(c, T) func(c, T, model.omega);
+            % sans T
+            model.energyFunc    = @(c, T) func(c, model.kT, model.omega);
+
+
             model = model.setupSpectralModel();
 
         end

@@ -16,8 +16,8 @@ simsetup = setupPhaseFieldSimulation(jsonstruct);
 %% Setup schedule
 % in this case only the time steps are given, no source term
 
-total = 5;
-n     = 100;                       
+total = 10;
+n     = 200;                       
 dt    = total / n;                  
 dts   = rampupTimesteps(total, dt, 5);
 
@@ -54,32 +54,33 @@ x = model.chebyshevNodes(model.N);
 [c1, c2] = model.getEquilibriumValues(1/PhysicalConstants.kb);
 
 
-% %% Figure 1 : energy functions
-% c_test = linspace(0.01, 0.99, 200)';
-% 
-% % F'(c) used in eqW
-% f_prime = model.energyFunc(c_test);
-% 
-% % f_hom(c) double well shape
-% omega = model.omega;
-% kT    = model.kT;
-% f_hom = omega .* c_test .* (1 - c_test) + kT .* (c_test .* log(c_test) + (1 - c_test) .* log(1 - c_test));
-% 
-% figure;
-% 
-% subplot(1, 2, 1);
-% plot(c_test, f_prime, 'b-', 'LineWidth', 1.5);
-% xlabel('c');
-% ylabel("F'(c)");
-% title('Energy derivative (used in eqW)');
-% grid on;
-% 
-% subplot(1, 2, 2);
-% plot(c_test, f_hom, 'r-', 'LineWidth', 1.5);
-% xlabel('c');
-% ylabel('f_{hom}(c)');
-% title('Free energy : double well');
-% grid on;
+%% Figure 1 : energy functions
+c_test = linspace(0.01, 0.99, 200)';
+% T_test = 300;
+
+% F'(c) used in eqW
+f_prime = model.energyFunc(c_test);
+
+% f_hom(c) double well shape
+omega = model.omega;
+kT    = model.kT;
+f_hom = omega .* c_test .* (1 - c_test) + kT .* (c_test .* log(c_test) + (1 - c_test) .* log(1 - c_test));
+
+figure;
+
+subplot(1, 2, 1);
+plot(c_test, f_prime, 'b-', 'LineWidth', 1.5);
+xlabel('c');
+ylabel("F'(c)");
+title('Energy derivative (used in eqW)');
+grid on;
+
+subplot(1, 2, 2);
+plot(c_test, f_hom, 'r-', 'LineWidth', 1.5);
+xlabel('c');
+ylabel('f_{hom}(c)');
+title('Free energy : double well');
+grid on;
 
 
 
@@ -128,6 +129,51 @@ yline(0, 'k--', 'LineWidth', 0.5);
 % grid on;
 % hold off;
 
+% %% Figure 2 : concentration profiles for multiple particles
+% nPlots     = min(10, numel(states));
+% op         = model.operators;
+% indInnerBc = op.indInnerBc;
+% nPt        = model.N + 1;
+% np         = model.np;
+% cInit      = simsetup.initstate.c;
+% cmap       = parula(nPlots);
+% 
+% figure;
+% 
+% for ip = 1 : np
+% 
+%     subplot(1, np, ip);
+%     hold on;
+% 
+%     initial state in black
+%     idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+%     plot(x, cInit(idx), 'k-', 'LineWidth', 2, 'DisplayName', 'initial');
+% 
+%     states 1 to nPlots with color gradient
+%     for iState = 1 : nPlots
+%         c   = states{iState}.c;
+%         plot(x, c(idx), 'Color', cmap(iState, :), ...
+%              'DisplayName', sprintf('state %d', iState));
+%     end
+% 
+%     if nPlots <= 10
+%         legend('show', 'Location', 'best');
+%     end
+% 
+%     colormap(cmap);
+%     cb            = colorbar();
+%     cb.Ticks      = [0, 1];
+%     cb.TickLabels = {'Initial state', 'Final state'};
+% 
+%     xlabel('x');
+%     ylabel('c');
+%     title(sprintf('Particle %d', ip));
+%     grid on;
+%     hold off;
+% 
+% end
+% 
+% sgtitle(sprintf('Concentration profiles : initial + states 1 to %d', nPlots));
 
 
 
@@ -239,129 +285,331 @@ yline(0, 'k--', 'LineWidth', 0.5);
 
 
 
-%% Interactive visualization with slider for multiples particles
+% %% Interactive visualization with slider for multiples particles
+% 
+% np = model.np;
+% times   = cellfun(@(s) s.time, states);
+% nStates = numel(states);
+% 
+% % vis parameters into a struct
+% op = model.operators;
+% 
+% plotParams.x            = x;
+% plotParams.nTrail       = 1;  % number of trailing curves
+% plotParams.cmap         = turbo(plotParams.nTrail);
+% plotParams.c0           = simsetup.initstate.c;
+% plotParams.indInnerBc   = op.indInnerBc;
+% plotParams.nPt          = model.N + 1;
+% plotParams.np           = np;
+% plotParams.ipSelected = 1;  % default : show all particles
+% 
+% % create figure 
+% fig = figure;
+% ax  = axes(fig, 'Position', [0.1, 0.2, 0.85, 0.75]);
+% xlabel(ax, 'x');
+% ylabel(ax, 'c');
+% grid(ax, 'on');
+% ylim(ax, [0, 1]);
+% hold(ax, 'on');
+% 
+% 
+% % time slider
+% sld = uicontrol(fig, 'Style', 'slider', ...
+%                 'Min', 1, 'Max', nStates, 'Value', 1, ...
+%                 'SliderStep', [1/(nStates-1), 10/(nStates-1)], ...
+%                 'Position', [80, 20, 640, 20]);
+% 
+% % time label 
+% lbl = uicontrol(fig, 'Style', 'text', ...
+%                 'Position', [80, 45, 640, 20], ...
+%                 'String', 'state 1');
+% 
+% % particle selection buttons
+% bgParticle = uibuttongroup(fig, ...
+%     'Title',    'Particle', ...
+%     'Position', [0.02, 0.15, 0.05, 0.75]);
+% 
+% % 'all' button at the top
+% uicontrol(bgParticle, 'Style', 'radiobutton', ...
+%           'String',   'all', ...
+%           'Tag',      '0', ...
+%           'Position', [5, np * 28 + 5, 70, 22], ...
+%           'Value',    1);
+% 
+% % one button per particle
+% for ip = 1 : np
+%     uicontrol(bgParticle, 'Style', 'radiobutton', ...
+%               'String',   sprintf('p %d', ip), ...
+%               'Tag',      sprintf('%d', ip), ...
+%               'Position', [5, (np - ip) * 28 + 5, 70, 22], ...
+%               'Value',    0);
+% end
+% 
+% % particle selection callback
+% bgParticle.SelectionChangedFcn = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, src);
+% 
+% % slider handler 
+% addlistener(sld, 'ContinuousValueChange', @(src, ~) updatePlot(src, ax, states, times, lbl, plotParams, bgParticle));
+% 
+% 
+% % draw first step
+% updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle);
+% 
+% function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle)
+% 
+%     % check that all graphics objects are still valid
+%     if ~isvalid(sld) || ~isvalid(ax) || ~isvalid(lbl)
+%         return;
+%     end
+% 
+%     % retrieve plot params
+%     x            = plotParams.x;
+%     nTrail       = plotParams.nTrail;  
+%     cmap         = plotParams.cmap;
+%     c0           = plotParams.c0;
+%     indInnerBc   = plotParams.indInnerBc;
+%     nPt          = plotParams.nPt;
+%     np           = plotParams.np;
+% 
+%     % get selected particle from button group 
+%     ipTag      = str2double(bgParticle.SelectedObject.Tag);
+%     if ipTag == 0
+%         ipList = 1 : np;  % show all particles
+%     else
+%         ipList = ipTag;   % show only selected particle
+%     end
+% 
+% 
+%     iState = round(sld.Value);
+%     cla(ax); % clear axes but keep settings
+%     hold(ax, 'on');
+% 
+%     % keep initial state displayed
+%     for ip = ipList
+%         idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+%         plot(ax, x, c0(idx), 'k-', 'LineWidth', 1, 'DisplayName','initial');
+%     end
+% 
+%     % main plot
+%     iStart = max(1, iState - nTrail + 1);
+%     nDrawn = iState - iStart + 1;
+%     for iTrail = iStart : iState
+%         alpha    = (iTrail - iStart + 1) / nDrawn; % 0 = oldest, 1 = newest
+%         trailIdx = round(alpha * (nTrail - 1)) + 1;
+%         c        = states{iTrail}.c;
+%         for ip = ipList
+%             idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+%             plot(ax, x, c(idx), ...
+%                  'Color',     [cmap(trailIdx, :), alpha], ...
+%                  'LineWidth', 0.5 + 1.5 * alpha);
+%         end
+%     end
+% 
+%     title(ax, sprintf('c(x,t)  @  t = %.2f  (state %d / %d)', times(iState), iState, numel(states)));
+%     lbl.String = sprintf('state %d / %d  @  t = %.4f', iState, numel(states), times(iState));
+%     % ylim(ax, [0, 1]);
+%     grid(ax, 'on');
+% 
+% end
 
-np = model.np;
-times   = cellfun(@(s) s.time, states);
+
+
+%% Interactive visualization with slider and full-simulation view
+
+np     = model.np;
+times  = cellfun(@(s) s.time, states);
 nStates = numel(states);
+op     = model.operators;
+% nPlots = min(10, nStates);
+nPlots = nStates;
 
-% vis parameters into a struct
-op = model.operators;
+% plotParams struct
+plotParams.x          = x;
+plotParams.nTrail     = 10;
+plotParams.cmapTrail  = turbo(10);
+plotParams.cmapFull   = parula(nPlots);
+plotParams.nPlots     = nPlots;
+plotParams.c0         = simsetup.initstate.c;
+plotParams.indInnerBc = op.indInnerBc;
+plotParams.nPt        = model.N + 1;
+plotParams.np         = np;
 
-plotParams.x            = x;
-plotParams.nTrail       = 1;  % number of trailing curves
-plotParams.cmap         = turbo(plotParams.nTrail);
-plotParams.c0           = simsetup.initstate.c;
-plotParams.indInnerBc   = op.indInnerBc;
-plotParams.nPt          = model.N + 1;
-plotParams.np           = np;
-plotParams.ipSelected = 1;  % default : show all particles
-
-% create figure 
+% create figure
 fig = figure;
-ax  = axes(fig, 'Position', [0.1, 0.2, 0.85, 0.75]);
+ax  = axes(fig, 'Position', [0.22, 0.18, 0.75, 0.72]);
 xlabel(ax, 'x');
 ylabel(ax, 'c');
 grid(ax, 'on');
+
 ylim(ax, [0, 1]);
+
 hold(ax, 'on');
+
+
 
 
 % time slider
 sld = uicontrol(fig, 'Style', 'slider', ...
                 'Min', 1, 'Max', nStates, 'Value', 1, ...
                 'SliderStep', [1/(nStates-1), 10/(nStates-1)], ...
-                'Position', [80, 20, 640, 20]);
+                'Position', [140, 20, 580, 20]);
 
-% time label 
+% time label
 lbl = uicontrol(fig, 'Style', 'text', ...
-                'Position', [80, 45, 640, 20], ...
+                'Position', [140, 45, 580, 20], ...
                 'String', 'state 1');
 
-% particle selection buttons
+% view mode button group
+bgMode = uibuttongroup(fig, ...
+    'Title',    'View', ...
+    'Position', [0.02, 0.55, 0.12, 0.35]);
+
+uicontrol(bgMode, 'Style', 'radiobutton', ...
+          'String',   'Slider', ...
+          'Tag',      'slider', ...
+          'Position', [5, 30, 80, 22], ...
+          'Value',    1);
+
+uicontrol(bgMode, 'Style', 'radiobutton', ...
+          'String',   'Full sim', ...
+          'Tag',      'full', ...
+          'Position', [5, 5, 80, 22], ...
+          'Value',    0);
+
+% particle selection button group
 bgParticle = uibuttongroup(fig, ...
     'Title',    'Particle', ...
-    'Position', [0.02, 0.15, 0.05, 0.75]);
+    'Position', [0.02, 0.15, 0.12, 0.38]);
 
-% 'all' button at the top
 uicontrol(bgParticle, 'Style', 'radiobutton', ...
           'String',   'all', ...
           'Tag',      '0', ...
-          'Position', [5, np * 28 + 5, 70, 22], ...
+          'Position', [5, np * 28 + 5, 80, 22], ...
           'Value',    1);
 
-% one button per particle
 for ip = 1 : np
     uicontrol(bgParticle, 'Style', 'radiobutton', ...
               'String',   sprintf('p %d', ip), ...
               'Tag',      sprintf('%d', ip), ...
-              'Position', [5, (np - ip) * 28 + 5, 70, 22], ...
+              'Position', [5, (np - ip) * 28 + 5, 80, 22], ...
               'Value',    0);
 end
 
-% particle selection callback
-bgParticle.SelectionChangedFcn = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, src);
+% callbacks
+bgParticle.SelectionChangedFcn = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, src,       bgMode);
+bgMode.SelectionChangedFcn     = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, src);
+addlistener(sld, 'ContinuousValueChange', ...
+            @(src, ~) updatePlot(src, ax, states, times, lbl, plotParams, bgParticle, bgMode));
 
-% slider handler 
-addlistener(sld, 'ContinuousValueChange', @(src, ~) updatePlot(src, ax, states, times, lbl, plotParams, bgParticle));
+% show/hide slider depending on mode
+bgMode.SelectionChangedFcn = @(src, ~) onModeChange(src, sld, lbl, ax, states, times, plotParams, bgParticle);
+
+% draw initial state
+updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode);
 
 
-% draw first step
-updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle);
-
-function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle)
-
-    % check that all graphics objects are still valid
-    if ~isvalid(sld) || ~isvalid(ax) || ~isvalid(lbl)
-        return;
-    end
-
-    % retrieve plot params
-    x            = plotParams.x;
-    nTrail       = plotParams.nTrail;  
-    cmap         = plotParams.cmap;
-    c0           = plotParams.c0;
-    indInnerBc   = plotParams.indInnerBc;
-    nPt          = plotParams.nPt;
-    np           = plotParams.np;
-
-    % get selected particle from button group 
-    ipTag      = str2double(bgParticle.SelectedObject.Tag);
-    if ipTag == 0
-        ipList = 1 : np;  % show all particles
+function onModeChange(bgMode, sld, lbl, ax, states, times, plotParams, bgParticle)
+    % show or hide slider and label depending on selected mode
+    if strcmp(bgMode.SelectedObject.Tag, 'slider')
+        sld.Visible = 'on';
+        lbl.Visible = 'on';
     else
-        ipList = ipTag;   % show only selected particle
+        sld.Visible = 'off';
+        lbl.Visible = 'off';
+    end
+    updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode);
+end
+
+
+function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode)
+
+    if ~isvalid(sld) || ~isvalid(ax) || ~isvalid(lbl); return; end
+
+    % retrieve plotParams
+    x          = plotParams.x;
+    nTrail     = plotParams.nTrail;
+    cmapTrail  = plotParams.cmapTrail;
+    cmapFull   = plotParams.cmapFull;
+    nPlots     = plotParams.nPlots;
+    c0         = plotParams.c0;
+    indInnerBc = plotParams.indInnerBc;
+    nPt        = plotParams.nPt;
+    np         = plotParams.np;
+
+    % selected particle
+    ipTag = str2double(bgParticle.SelectedObject.Tag);
+    if ipTag == 0
+        ipList = 1 : np;
+    else
+        ipList = ipTag;
     end
 
-    
-    iState = round(sld.Value);
-    cla(ax); % clear axes but keep settings
+    % selected view mode
+    viewMode = bgMode.SelectedObject.Tag;
+
+    cla(ax);
     hold(ax, 'on');
 
-    % keep initial state displayed
-    for ip = ipList
-        idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
-        plot(ax, x, c0(idx), 'k-', 'LineWidth', 1, 'DisplayName','initial');
-    end
-    
-    % main plot
-    iStart = max(1, iState - nTrail + 1);
-    nDrawn = iState - iStart + 1;
-    for iTrail = iStart : iState
-        alpha    = (iTrail - iStart + 1) / nDrawn; % 0 = oldest, 1 = newest
-        trailIdx = round(alpha * (nTrail - 1)) + 1;
-        c        = states{iTrail}.c;
+    if strcmp(viewMode, 'slider')
+
+        % --- slider mode : trail around current state ---
+        iState = round(sld.Value);
+        iStart = max(1, iState - nTrail + 1);
+        nDrawn = iState - iStart + 1;
+
+        % initial state in black
         for ip = ipList
             idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
-            plot(ax, x, c(idx), ...
-                 'Color',     [cmap(trailIdx, :), alpha], ...
-                 'LineWidth', 0.5 + 1.5 * alpha);
+            plot(ax, x, c0(idx), 'k-', 'LineWidth', 1, 'DisplayName', 'initial');
         end
+
+        % trail curves
+        for iTrail = iStart : iState
+            alpha    = (iTrail - iStart + 1) / nDrawn;
+            trailIdx = round(alpha * (nTrail - 1)) + 1;
+            c        = states{iTrail}.c;
+            for ip = ipList
+                idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+                plot(ax, x, c(idx), ...
+                     'Color',     [cmapTrail(trailIdx, :), alpha], ...
+                     'LineWidth', 0.5 + 1.5 * alpha);
+            end
+        end
+
+        title(ax, sprintf('c(x,t)  @  t = %.2f  (state %d / %d)', ...
+                          times(iState), iState, numel(states)));
+        lbl.String = sprintf('state %d / %d  @  t = %.4f', ...
+                             iState, numel(states), times(iState));
+
+    else
+
+        % --- full simulation mode : all nPlots states with color gradient ---
+
+        % initial state in black
+        for ip = ipList
+            idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+            plot(ax, x, c0(idx), 'k-', 'LineWidth', 2, 'DisplayName', 'initial');
+        end
+
+        % nPlots states with color gradient
+        for iState = 1 : nPlots
+            c = states{iState}.c;
+            for ip = ipList
+                idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
+                plot(ax, x, c(idx), 'Color', cmapFull(iState, :));
+            end
+        end
+
+        colormap(ax, cmapFull);
+        cb            = colorbar(ax);
+        cb.Ticks      = [0, 1];
+        cb.TickLabels = {'Initial state', 'Final state'};
+
+        title(ax, sprintf('Concentration profiles : initial + states 1 to %d', nPlots));
+
     end
 
-    title(ax, sprintf('c(x,t)  @  t = %.2f  (state %d / %d)', times(iState), iState, numel(states)));
-    lbl.String = sprintf('state %d / %d  @  t = %.4f', iState, numel(states), times(iState));
-    % ylim(ax, [0, 1]);
     grid(ax, 'on');
+    drawnow limitrate;
 
 end
