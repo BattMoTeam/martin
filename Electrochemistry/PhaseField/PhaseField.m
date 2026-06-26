@@ -68,9 +68,9 @@ classdef PhaseField < BaseModel
             model.mobilityFunc  = setupFunction(model.mobility);
             model.dMobilityFunc = setupFunction(model.dMobility);
             func                = setupFunction(model.energy);
-            % Avec T
+            % Avec T :
             % model.energyFunc    = @(c, T) func(c, T, model.omega);
-            % sans T
+            % sans T :
             model.energyFunc    = @(c, T) func(c, model.kT, model.omega);
 
 
@@ -303,7 +303,7 @@ classdef PhaseField < BaseModel
             % 1. ------------------------------------------------
             % with a random perturbation aroud the mean value 0.5
             for ip = 1 : np
-                rng(ip); % to keep the same random perturbation
+                rng(ip+26); % to keep the same random perturbation
                 mean = 0.50;
                 cInit{ip} = mean + 0.02 * randn(nPt, 1);
             end

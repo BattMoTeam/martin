@@ -16,7 +16,7 @@ simsetup = setupPhaseFieldSimulation(jsonstruct);
 %% Setup schedule
 % in this case only the time steps are given, no source term
 
-total = 10;
+total = 15;
 n     = 200;                       
 dt    = total / n;                  
 dts   = rampupTimesteps(total, dt, 5);
@@ -25,10 +25,10 @@ dts   = rampupTimesteps(total, dt, 5);
 clear flux
 flux.functionFormat = 'tabulated';
 flux.argumentList   = {'time'};
-% flux.dataX          = [0, 10, 11, 20, 21, total];
-% flux.dataY          = [0, 0, 0.01, 0.01, -0.01, -0.01];
-flux.dataX = [0, total];
-flux.dataY = [0, 0];
+flux.dataX          = [0, 100, 101, total];
+flux.dataY          = [0.01, 0.01, -0.01, -0.01];
+% flux.dataX = [0, total];
+% flux.dataY = [0, 0];
 
 fluxFunc = setupFunction(flux);
 control  = struct('src', @(t) fluxFunc(t)*ones(model.np, 1));
@@ -54,47 +54,54 @@ x = model.chebyshevNodes(model.N);
 [c1, c2] = model.getEquilibriumValues(1/PhysicalConstants.kb);
 
 
-%% Figure 1 : energy functions
-c_test = linspace(0.01, 0.99, 200)';
-% T_test = 300;
+% %% Figure 1 : energy functions
+% c_test = linspace(0.01, 0.99, 200)';
+% % T_test = 300;
+% 
+% % F'(c) used in eqW
+% f_prime = model.energyFunc(c_test);
+% 
+% % f_hom(c) double well shape
+% omega = model.omega;
+% kT    = model.kT;
+% f_hom = omega .* c_test .* (1 - c_test) + kT .* (c_test .* log(c_test) + (1 - c_test) .* log(1 - c_test));
+% 
+% figure;
+% hold on;
+% 
+% % % subplot(1, 2, 1);
+% % plot(c_test, f_prime, 'b-', 'LineWidth', 1.5);
+% % xlabel('c');
+% % ylabel("F'(c)");
+% % title('Energy derivative (used in eqW)');
+% % grid on;
+% 
+% % subplot(1, 2, 2);
+% plot(c_test, f_hom, 'r-', 'LineWidth', 1.5);
+% xlabel('c');
+% ylabel('f_{hom}(c)');
+% title('Free energy : double well');
+% grid on;
 
-% F'(c) used in eqW
-f_prime = model.energyFunc(c_test);
 
-% f_hom(c) double well shape
-omega = model.omega;
-kT    = model.kT;
-f_hom = omega .* c_test .* (1 - c_test) + kT .* (c_test .* log(c_test) + (1 - c_test) .* log(1 - c_test));
 
-figure;
-
-subplot(1, 2, 1);
-plot(c_test, f_prime, 'b-', 'LineWidth', 1.5);
-xlabel('c');
-ylabel("F'(c)");
-title('Energy derivative (used in eqW)');
-grid on;
-
-subplot(1, 2, 2);
-plot(c_test, f_hom, 'r-', 'LineWidth', 1.5);
-xlabel('c');
-ylabel('f_{hom}(c)');
-title('Free energy : double well');
-grid on;
+% %% Figure 1.5 : boundary flux control over time
+% t_plot     = linspace(0, total, 500);
+% fluxValues = arrayfun(@(t) fluxFunc(t), t_plot);
+% 
+% figure;
+% plot(t_plot, fluxValues, 'b-', 'LineWidth', 1.5);
+% xlabel('time');
+% ylabel('J_{in}');
+% title('Boundary flux control at x = 1');
+% grid on;
+% yline(0, 'k--', 'LineWidth', 0.5);
 
 
 
-%% Figure 1.5 : boundary flux control over time
-t_plot     = linspace(0, total, 500);
-fluxValues = arrayfun(@(t) fluxFunc(t), t_plot);
 
-figure;
-plot(t_plot, fluxValues, 'b-', 'LineWidth', 1.5);
-xlabel('time');
-ylabel('J_{in}');
-title('Boundary flux control at x = 1');
-grid on;
-yline(0, 'k--', 'LineWidth', 0.5);
+
+
 
 
 % %% Figure 2 : concentration profiles
@@ -177,6 +184,13 @@ yline(0, 'k--', 'LineWidth', 0.5);
 
 
 
+
+
+
+
+
+
+
 % %% Animated plot of concentration profile
 % times = cellfun(@(s) s.time, states);
 % 
@@ -203,6 +217,15 @@ yline(0, 'k--', 'LineWidth', 0.5);
 %     drawnow;
 %     pause(0.005);  % adjust to control animation speed
 % end
+
+
+
+
+
+
+
+
+
 
 
 % 
@@ -245,6 +268,16 @@ yline(0, 'k--', 'LineWidth', 0.5);
 % end
 
 
+
+
+
+
+
+
+
+
+
+
 % %% Animation with color based on control phase
 % % phase 1 : t in [0, 10]   -> no flux     -> blue
 % % phase 2 : t in [11, 20]  -> flux = 0.01 -> red
@@ -282,6 +315,17 @@ yline(0, 'k--', 'LineWidth', 0.5);
 %     drawnow;
 %     pause(0.003);
 % end
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -414,7 +458,28 @@ yline(0, 'k--', 'LineWidth', 0.5);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 %% Interactive visualization with slider and full-simulation view
+
+
+
+set(0, 'defaultlinelinewidth', 1);
+set(0, 'DefaultAxesFontSize', 16);
+set(0, 'defaulttextfontsize', 18);
+
+
+
 
 np     = model.np;
 times  = cellfun(@(s) s.time, states);
@@ -423,9 +488,11 @@ op     = model.operators;
 % nPlots = min(10, nStates);
 nPlots = nStates;
 
+% fontSize = 13;
+
 % plotParams struct
 plotParams.x          = x;
-plotParams.nTrail     = 10;
+plotParams.nTrail     = 1;
 plotParams.cmapTrail  = turbo(10);
 plotParams.cmapFull   = parula(nPlots);
 plotParams.nPlots     = nPlots;
@@ -435,8 +502,10 @@ plotParams.nPt        = model.N + 1;
 plotParams.np         = np;
 
 % create figure
-fig = figure;
+fig = figure('Position', [100, 100, 850, 580]);
 ax  = axes(fig, 'Position', [0.22, 0.18, 0.75, 0.72]);
+ax.FontSize  = 12;
+
 xlabel(ax, 'x');
 ylabel(ax, 'c');
 grid(ax, 'on');
@@ -496,7 +565,7 @@ for ip = 1 : np
 end
 
 % callbacks
-bgParticle.SelectionChangedFcn = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, src,       bgMode);
+bgParticle.SelectionChangedFcn = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, src, bgMode);
 bgMode.SelectionChangedFcn     = @(src, ~) updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, src);
 addlistener(sld, 'ContinuousValueChange', ...
             @(src, ~) updatePlot(src, ax, states, times, lbl, plotParams, bgParticle, bgMode));
@@ -577,7 +646,9 @@ function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode)
         end
 
         title(ax, sprintf('c(x,t)  @  t = %.2f  (state %d / %d)', ...
-                          times(iState), iState, numel(states)));
+                  times(iState), iState, numel(states)), ...
+      'FontSize', 14, 'FontWeight', 'bold');
+        
         lbl.String = sprintf('state %d / %d  @  t = %.4f', ...
                              iState, numel(states), times(iState));
 
@@ -588,7 +659,7 @@ function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode)
         % initial state in black
         for ip = ipList
             idx = indInnerBc(ip) : indInnerBc(ip) + nPt - 1;
-            plot(ax, x, c0(idx), 'k-', 'LineWidth', 2, 'DisplayName', 'initial');
+            plot(ax, x, c0(idx), 'k-', 'LineWidth', 1, 'DisplayName', 'initial');
         end
 
         % nPlots states with color gradient
@@ -603,9 +674,9 @@ function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode)
         colormap(ax, cmapFull);
         cb            = colorbar(ax);
         cb.Ticks      = [0, 1];
-        cb.TickLabels = {'Initial state', 'Final state'};
+        cb.TickLabels = {'Initial', 'Final'};
 
-        title(ax, sprintf('Concentration profiles : initial + states 1 to %d', nPlots));
+        title(ax, sprintf('Concentration profiles : initial + states 1 to %d', nPlots), 'FontSize', 14, 'FontWeight', 'bold');
 
     end
 
@@ -613,3 +684,184 @@ function updatePlot(sld, ax, states, times, lbl, plotParams, bgParticle, bgMode)
     drawnow limitrate;
 
 end
+
+
+
+
+
+
+
+
+% 
+% %% Poster plot : imposed flux - two separate figures
+% lineWidths = 2;
+% fontSize   = 13;
+% 
+% %% --------------------------------------------------------
+% %% Figure 1 : Lithiation
+% %% --------------------------------------------------------
+% fig1 = figure('Position', [100, 100, 850, 580]);
+% ax1  = axes(fig1);
+% hold on;
+% 
+% iStatesLi = [70, 210, 620, 885, 1015];
+% stateNumsLi = [1, 2, 3, 4, 5];  % numbering 1 to 5
+% 
+% cmapLi = [0.05 0.15 0.50;
+%           0.12 0.25 0.60;
+%           0.22 0.35 0.65;
+%           0.35 0.28 0.60;
+%           0.42 0.18 0.55];
+% 
+% xLabels1 = [0.74, 0.21, -0.48, -0.8, -0.8];
+% 
+% for k = 1 : numel(iStatesLi)
+%     c = states{iStatesLi(k)}.c;
+% 
+%     % plot curve
+%     plot(ax1, x, c, ...
+%          'Color',     cmapLi(k,:), ...
+%          'LineWidth', lineWidths, ...
+%          'DisplayName', sprintf('(%d)  state %d', stateNumsLi(k), iStatesLi(k)));
+% 
+%     % place number label
+%     cAtX = interp1(x, c, xLabels1(k));
+%     if k == 4 || k == 5
+%         yOffset = 0.04;   % just above for homogeneous curves
+%     else
+%         yOffset = -0.15;  % just below for front curves
+%     end
+%     text(ax1, xLabels1(k), cAtX + yOffset, sprintf('(%d)', stateNumsLi(k)), ...
+%          'FontSize', fontSize, 'FontWeight', 'bold', 'Color', cmapLi(k,:), ...
+%          'HorizontalAlignment', 'center');
+% end
+% 
+% % flux boundary marker
+% xline(ax1, 1, ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1.2, ...
+%       'HandleVisibility', 'off');
+% 
+% % incoming flux arrows along x=1 (lithiation = entering)
+% % small upward-pointing arrows stacked along the right boundary
+% yArrows = linspace(0.15, 0.85, 5);
+% for k = 1 : numel(yArrows)
+%     annotation(fig1, 'arrow', [0.904 0.874], ...
+%                [ax1.Position(2) + yArrows(k)*ax1.Position(4), ...
+%                 ax1.Position(2) + yArrows(k)*ax1.Position(4)], ...
+%                'Color', [0.20 0.55 0.20], 'LineWidth', 1.5, ...
+%                'HeadWidth', 7, 'HeadLength', 6);
+% end
+% 
+% % % front direction arrows
+% % annotation(fig1, 'arrow', [0.61 0.55], [0.55 0.55], ...
+% %            'Color', 'k', 'LineWidth', 1, 'HeadWidth', 8, 'HeadLength', 10);
+% % annotation(fig1, 'arrow', [0.34 0.28], [0.55 0.55], ...
+% %            'Color', 'k', 'LineWidth', 1, 'HeadWidth', 8, 'HeadLength', 10);
+% 
+% % axes formatting
+% xlabel(ax1, 'x', 'FontSize', fontSize);
+% ylabel(ax1, 'c', 'FontSize', fontSize);
+% ylim(ax1, [0, 1]);
+% xlim(ax1, [-1, 1]);
+% grid(ax1, 'on');
+% ax1.FontSize  = 12;
+% ax1.GridAlpha = 0.25;
+% title(ax1, 'Lithiation', 'FontSize', fontSize + 1, 'FontWeight', 'bold');
+% 
+% % leg1 = legend(ax1, 'show', 'Location', 'northwest', 'FontSize', 10);
+% % leg1.Box = 'on';
+% 
+% hold off;
+% 
+% %% --------------------------------------------------------
+% %% Figure 2 : Delithiation
+% %% --------------------------------------------------------
+% fig2 = figure('Position', [1000, 100, 850, 580]);
+% ax2  = axes(fig2);
+% hold on;
+% 
+% iStatesDe   = [1015, 1340, 1420, 1640, 2005];
+% stateNumsDe = [5, 6, 7, 8, 9];  % continues from plot 1
+% 
+% cmapDe = [0.42 0.18 0.55;
+%           0.58 0.18 0.35;
+%           0.72 0.25 0.10;
+%           0.82 0.38 0.05;
+%           0.77 0.35 0.00];
+% 
+% xLabels2 = [NaN, 0.80, 0.70, 0.31, -0.27];
+% 
+% for k = 1 : numel(iStatesDe)
+%     c = states{iStatesDe(k)}.c;
+% 
+%     % plot curve
+%     plot(ax2, x, c, ...
+%          'Color',     cmapDe(k,:), ...
+%          'LineWidth', lineWidths, ...
+%          'DisplayName', sprintf('(%d)  state %d', stateNumsDe(k), iStatesDe(k)));
+% 
+%     % place number label - skip k=1 (already in link text)
+%     if isnan(xLabels2(k)); continue; end
+%     cAtX = interp1(x, c, xLabels2(k));
+%     if k == 2
+%         yOffset = 0.04;   % just above for homogeneous curve
+%     else
+%         yOffset = -0.17;  % just below for front curves
+%     end
+%     text(ax2, xLabels2(k), cAtX + yOffset, sprintf('(%d)', stateNumsDe(k)), ...
+%          'FontSize', fontSize, 'FontWeight', 'bold', 'Color', cmapDe(k,:), ...
+%          'HorizontalAlignment', 'center');
+% end
+% 
+% % flux boundary marker
+% xline(ax2, 1, ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1.2, ...
+%       'HandleVisibility', 'off');
+% 
+% % outgoing flux arrows along x=1 (delithiation = exiting)
+% yArrows = linspace(0.15, 0.85, 5);
+% for k = 1 : numel(yArrows)
+%     annotation(fig2, 'arrow', [0.874 0.904], ...
+%                [ax2.Position(2) + yArrows(k)*ax2.Position(4), ...
+%                 ax2.Position(2) + yArrows(k)*ax2.Position(4)], ...
+%                'Color', [0.75 0.15 0.10], 'LineWidth', 1.5, ...
+%                'HeadWidth', 7, 'HeadLength', 6);
+% end
+% 
+% 
+% % link label
+% text(ax2, -0.98, 0.94, '\leftarrow (5) end of lithiation', ...
+%      'FontSize', fontSize, 'Color', cmapDe(1,:), 'FontAngle', 'italic');
+% 
+% % % front direction arrows
+% % annotation(fig2, 'arrow', [0.79 0.72], [0.55 0.55], ...
+% %            'Color', 'k', 'LineWidth', 1, 'HeadWidth', 8, 'HeadLength', 10);
+% % annotation(fig2, 'arrow', [0.63 0.56], [0.55 0.55], ...
+% %            'Color', 'k', 'LineWidth', 1, 'HeadWidth', 8, 'HeadLength', 10);
+% 
+% % axes formatting
+% xlabel(ax2, 'x', 'FontSize', fontSize);
+% ylabel(ax2, 'c', 'FontSize', fontSize);
+% ylim(ax2, [0, 1]);
+% xlim(ax2, [-1, 1]);
+% grid(ax2, 'on');
+% ax2.FontSize  = 12;
+% ax2.GridAlpha = 0.25;
+% title(ax2, 'Delithiation', 'FontSize', fontSize + 1, 'FontWeight', 'bold');
+% 
+% % leg2 = legend(ax2, 'show', 'Location', 'southwest', 'FontSize', 10);
+% % leg2.Box = 'on';
+% 
+% hold off;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

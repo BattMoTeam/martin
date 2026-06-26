@@ -1,6 +1,6 @@
 {
   "N"       : 60,
-  "epsilon" : 0.1,
+  "epsilon" : 0.05,
   "mobility" : {
     "functionFormat" : "named function",
     "argumentList"   : ["c"],
